@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { revalidateSiteSettings } from "@/lib/revalidate-public";
 import { connectDB } from "@/lib/mongodb";
 import { SiteSettings } from "@/models/SiteSettings";
 
@@ -26,6 +27,8 @@ export async function PUT(request: Request) {
       { $set: body },
       { new: true, upsert: true }
     );
+
+    revalidateSiteSettings();
 
     return NextResponse.json(settings);
   } catch (error) {

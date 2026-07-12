@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Participant } from "@/models/Participant";
+import { revalidateParticipantData } from "@/lib/revalidate-public";
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -11,6 +12,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const body = await request.json();
     const participant = await Participant.findByIdAndUpdate(id, body, { new: true });
     if (!participant) return NextResponse.json({ error: "Peserta tidak ditemukan" }, { status: 404 });
+
+    revalidateParticipantData();
+
     return NextResponse.json(participant);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {
@@ -26,6 +30,9 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     await connectDB();
     const { id } = await params;
     await Participant.findByIdAndDelete(id);
+
+    revalidateParticipantData();
+
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {

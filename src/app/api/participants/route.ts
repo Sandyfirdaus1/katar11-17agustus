@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Participant } from "@/models/Participant";
-import { getSettings } from "@/lib/data";
+import { getFreshSettings, getParticipants } from "@/lib/data";
+import { revalidateParticipantData } from "@/lib/revalidate-public";
 
 export async function GET() {
   try {
-    await connectDB();
-    const participants = await Participant.find().sort({ createdAt: -1 }).lean();
-    return NextResponse.json(participants);
+    const participants = await getParticipants();
+    return NextResponse.json(participants, {
+      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" },
+    });
   } catch {
     return NextResponse.json({ error: "Gagal mengambil data peserta" }, { status: 500 });
   }
@@ -16,7 +18,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await connectDB();
-    const settings = await getSettings();
+    const settings = await getFreshSettings();
 
     if (!settings.registrationOpen) {
       return NextResponse.json(
@@ -54,6 +56,8 @@ export async function POST(request: Request) {
       category: category.trim(),
       status: "terdaftar",
     });
+
+    revalidateParticipantData();
 
     return NextResponse.json(participant, { status: 201 });
   } catch {

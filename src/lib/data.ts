@@ -1,7 +1,36 @@
+import { unstable_cache } from "next/cache";
 import { connectDB } from "@/lib/mongodb";
 import { SiteSettings } from "@/models/SiteSettings";
 import { LombaGroup } from "@/models/LombaGroup";
 import { Gallery } from "@/models/Gallery";
+import { Participant } from "@/models/Participant";
+
+export type ParticipantStats = {
+  terdaftar: number;
+  lolos: number;
+  juara1: number;
+  juara2: number;
+  juara3: number;
+  didiskualifikasi: number;
+};
+
+export type PublicParticipant = {
+  _id: string;
+  name: string;
+  age?: number;
+  phone?: string;
+  category: string;
+  status: string;
+};
+
+const emptyStats: ParticipantStats = {
+  terdaftar: 0,
+  lolos: 0,
+  juara1: 0,
+  juara2: 0,
+  juara3: 0,
+  didiskualifikasi: 0,
+};
 
 const defaultSettings = {
   aboutHighlight: "Kegiatan 17 Agustus 2026 RT 011",
@@ -39,7 +68,7 @@ const defaultGallery = Array.from({ length: 11 }, (_, i) => ({
   order: i,
 }));
 
-export async function getSettings() {
+async function fetchSettings() {
   try {
     await connectDB();
     let settings = await SiteSettings.findOne().lean();
@@ -50,7 +79,7 @@ export async function getSettings() {
   }
 }
 
-export async function getLombaGroups() {
+async function fetchLombaGroups() {
   try {
     await connectDB();
     let groups = await LombaGroup.find().sort({ order: 1 }).lean();
@@ -64,7 +93,7 @@ export async function getLombaGroups() {
   }
 }
 
-export async function getGalleryImages() {
+async function fetchGalleryImages() {
   try {
     await connectDB();
     let images = await Gallery.find().sort({ order: 1 }).lean();
@@ -78,7 +107,89 @@ export async function getGalleryImages() {
   }
 }
 
-export async function getUniqueLomba() {
+async function fetchParticipantStats(): Promise<ParticipantStats> {
+  try {
+    await connectDB();
+    const results = await Participant.aggregate<{ _id: string; count: number }>([
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]);
+
+    const counts = { ...emptyStats };
+    for (const row of results) {
+      if (row._id in counts) {
+        counts[row._id as keyof ParticipantStats] = row.count;
+      }
+    }
+    return counts;
+  } catch {
+    return emptyStats;
+  }
+}
+
+async function fetchParticipants(): Promise<PublicParticipant[]> {
+  try {
+    await connectDB();
+    const participants = await Participant.find()
+      .sort({ createdAt: -1 })
+      .select("name age phone category status")
+      .lean();
+    return JSON.parse(JSON.stringify(participants));
+  } catch {
+    return [];
+  }
+}
+
+const getCachedSettings = unstable_cache(fetchSettings, ["site-settings"], {
+  revalidate: 60,
+  tags: ["site-settings"],
+});
+
+const getCachedLombaGroups = unstable_cache(fetchLombaGroups, ["lomba-groups"], {
+  revalidate: 60,
+  tags: ["lomba-groups"],
+});
+
+const getCachedGalleryImages = unstable_cache(fetchGalleryImages, ["gallery-images"], {
+  revalidate: 60,
+  tags: ["gallery-images"],
+});
+
+const getCachedParticipantStats = unstable_cache(fetchParticipantStats, ["participant-stats"], {
+  revalidate: 60,
+  tags: ["participant-stats"],
+});
+
+const getCachedParticipants = unstable_cache(fetchParticipants, ["participants"], {
+  revalidate: 60,
+  tags: ["participants"],
+});
+
+export async function getSettings() {
+  return getCachedSettings();
+}
+
+export async function getLombaGroups() {
+  return getCachedLombaGroups();
+}
+
+export async function getGalleryImages() {
+  return getCachedGalleryImages();
+}
+
+export async function getParticipantStats() {
+  return getCachedParticipantStats();
+}
+
+export async function getParticipants() {
+  return getCachedParticipants();
+}
+
+export async function getUniqueLomba(): Promise<string[]> {
   const groups = await getLombaGroups();
-  return [...new Set(groups.flatMap((g: { lomba: string[] }) => g.lomba))];
+  const all = groups.flatMap((g: { lomba: string[] }) => g.lomba);
+  return Array.from(new Set(all));
+}
+
+export async function getFreshSettings() {
+  return fetchSettings();
 }

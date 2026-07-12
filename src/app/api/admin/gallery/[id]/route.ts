@@ -4,6 +4,7 @@ import path from "path";
 import { requireAdmin } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Gallery } from "@/models/Gallery";
+import { revalidateGalleryData } from "@/lib/revalidate-public";
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -23,6 +24,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     }
 
     await Gallery.findByIdAndDelete(id);
+    revalidateGalleryData();
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {

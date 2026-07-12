@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { revalidateLombaData } from "@/lib/revalidate-public";
 import { connectDB } from "@/lib/mongodb";
 import { LombaGroup } from "@/models/LombaGroup";
 
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
     await connectDB();
     const body = await request.json();
     const group = await LombaGroup.create(body);
+    revalidateLombaData();
     return NextResponse.json(group, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {

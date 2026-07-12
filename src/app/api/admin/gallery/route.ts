@@ -4,6 +4,7 @@ import path from "path";
 import { requireAdmin } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Gallery } from "@/models/Gallery";
+import { revalidateGalleryData } from "@/lib/revalidate-public";
 
 export async function GET() {
   try {
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
       alt,
       order: count,
     });
+
+    revalidateGalleryData();
 
     return NextResponse.json(image, { status: 201 });
   } catch (error) {
