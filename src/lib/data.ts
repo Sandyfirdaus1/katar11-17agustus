@@ -51,7 +51,7 @@ const defaultSettings = {
   whatsappLink: "6289517872311",
   locationName: "Lingkungan RT 011",
   locationAddress: "Jl Walang Sari Raya",
-  footerCopyright: "© 2026 Katar 11. Dirgahayu Republik Indonesia.",
+  footerCopyright: "© 2026 Crew RT 011. Dirgahayu Republik Indonesia.",
   footerCredit: "Dibuat Oleh Shandy",
 };
 
@@ -65,6 +65,7 @@ const defaultLomba = [
 const defaultGallery = Array.from({ length: 11 }, (_, i) => ({
   src: `/images/galeri-kegiatan/gambar${i + 1}.JPG`,
   alt: `Dokumentasi kegiatan 17 Agustus ${i + 1}`,
+  year: 2025,
   order: i,
 }));
 
@@ -96,10 +97,10 @@ async function fetchLombaGroups() {
 async function fetchGalleryImages() {
   try {
     await connectDB();
-    let images = await Gallery.find().sort({ order: 1 }).lean();
+    let images = await Gallery.find().sort({ year: -1, order: 1 }).lean();
     if (images.length === 0) {
       await Gallery.insertMany(defaultGallery);
-      images = await Gallery.find().sort({ order: 1 }).lean();
+      images = await Gallery.find().sort({ year: -1, order: 1 }).lean();
     }
     return JSON.parse(JSON.stringify(images));
   } catch {

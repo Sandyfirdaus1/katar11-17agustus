@@ -15,6 +15,7 @@ import {
   ToggleLeft,
   ToggleRight,
   Search,
+  Check,
 } from "lucide-react";
 
 type Tab = "settings" | "lomba" | "galeri" | "peserta";
@@ -53,6 +54,7 @@ interface GalleryItem {
   _id: string;
   src: string;
   alt: string;
+  year: number;
   order: number;
 }
 
@@ -174,6 +176,9 @@ export default function AdminDashboard() {
 
   const [newLomba, setNewLomba] = useState({ group: "", age: "", lomba: "" });
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadYear, setUploadYear] = useState(String(new Date().getFullYear()));
+  const [savingGalleryId, setSavingGalleryId] = useState<string | null>(null);
+  const [savedGalleryId, setSavedGalleryId] = useState<string | null>(null);
   const [participantSearch, setParticipantSearch] = useState("");
   const [participantLombaFilter, setParticipantLombaFilter] = useState("all");
   const [participantStatusFilter, setParticipantStatusFilter] = useState("all");
@@ -269,12 +274,48 @@ export default function AdminDashboard() {
     if (!uploadFile) return;
     const formData = new FormData();
     formData.append("file", uploadFile);
+    formData.append("year", uploadYear);
     const res = await fetch("/api/admin/gallery", { method: "POST", body: formData });
     if (res.ok) {
       setUploadFile(null);
       const data = await fetch("/api/admin/gallery").then((r) => r.json());
       setGallery(data);
       showMsg("Gambar berhasil diupload");
+    }
+  }
+
+  async function saveGalleryYear(id: string, year: number) {
+    if (!year || year < 2000 || year > 2100) {
+      showMsg("Tahun harus diisi antara 2000–2100");
+      return;
+    }
+
+    setSavingGalleryId(id);
+    setSavedGalleryId(null);
+
+    try {
+      const res = await fetch(`/api/admin/gallery/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ year }),
+      });
+
+      if (!res.ok) {
+        showMsg("Gagal menyimpan tahun galeri");
+        return;
+      }
+
+      const updated = await fetch("/api/admin/gallery").then((r) => r.json());
+      setGallery(updated);
+      setSavedGalleryId(id);
+      showMsg("Tahun galeri berhasil disimpan!");
+      setTimeout(() => {
+        setSavedGalleryId((current) => (current === id ? null : current));
+      }, 3000);
+    } catch {
+      showMsg("Gagal menyimpan tahun galeri");
+    } finally {
+      setSavingGalleryId(null);
     }
   }
 
@@ -530,26 +571,71 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 {gallery.map((img) => (
-                  <div key={img._id} className="group relative aspect-square overflow-hidden rounded-xl bg-gray-100">
-                    <Image src={img.src} alt={img.alt} fill className="object-cover" />
-                    <button
-                      onClick={() => deleteGallery(img._id)}
-                      className="absolute right-2 top-2 rounded-full bg-red-600 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div key={img._id} className="overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                    <div className="group relative aspect-square">
+                      <Image src={img.src} alt={img.alt} fill className="object-cover" />
+                      <button
+                        onClick={() => deleteGallery(img._id)}
+                        className="absolute right-2 top-2 rounded-full bg-red-600 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="space-y-2 bg-white p-3">
+                      <label className="block text-xs font-semibold text-gray-600">Tahun</label>
+                      <input
+                        type="number"
+                        min={2000}
+                        max={2100}
+                        value={img.year ?? new Date().getFullYear()}
+                        onChange={(e) =>
+                          setGallery((prev) =>
+                            prev.map((g) =>
+                              g._id === img._id ? { ...g, year: Number(e.target.value) } : g
+                            )
+                          )
+                        }
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      />
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          onClick={() => saveGalleryYear(img._id, img.year)}
+                          disabled={savingGalleryId === img._id}
+                          className="text-xs font-semibold text-[#DC2626] hover:underline disabled:opacity-60"
+                        >
+                          {savingGalleryId === img._id ? "Menyimpan..." : "Simpan tahun"}
+                        </button>
+                        {savedGalleryId === img._id && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-600">
+                            <Check size={14} />
+                            Tersimpan
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
 
               <div className="rounded-xl border border-dashed border-gray-300 p-4">
                 <p className="mb-3 text-sm font-semibold text-gray-700">Upload Gambar Baru</p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                  className="text-sm"
-                />
+                <div className="mb-3 grid gap-3 md:grid-cols-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                    className="text-sm"
+                  />
+                  <input
+                    type="number"
+                    min={2000}
+                    max={2100}
+                    value={uploadYear}
+                    onChange={(e) => setUploadYear(e.target.value)}
+                    placeholder="Tahun kegiatan"
+                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  />
+                </div>
                 <button
                   onClick={uploadGallery}
                   disabled={!uploadFile}

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -35,7 +37,15 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f5f5f5] px-4">
+    <main className="relative flex min-h-screen items-center justify-center bg-[#f5f5f5] px-4">
+      <Link
+        href="/"
+        className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-white hover:text-[#DC2626] md:left-6 md:top-6"
+      >
+        <ArrowLeft size={16} />
+        Beranda
+      </Link>
+
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-md"

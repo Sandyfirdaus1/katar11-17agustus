@@ -1,13 +1,21 @@
 import Link from "next/link";
 import { Images, ChevronRight } from "lucide-react";
 import GalleryGrid from "./GalleryGrid";
+import {
+  getGalleryPreviewSections,
+  groupGalleryByYear,
+  type GalleryImageItem,
+} from "@/lib/gallery-utils";
 
 interface GalleryProps {
-  images: { src: string; alt: string }[];
+  images: GalleryImageItem[];
 }
 
 export default function Gallery({ images }: GalleryProps) {
-  const preview = images.slice(0, 4);
+  const previewSections = getGalleryPreviewSections(groupGalleryByYear(images), 4);
+  const previewImages = previewSections.flatMap((section) =>
+    section.images.map((image) => ({ ...image, year: section.year }))
+  );
 
   return (
     <section className="bg-[#fafafa] py-12 md:py-16">
@@ -16,7 +24,14 @@ export default function Gallery({ images }: GalleryProps) {
           GALERI KEGIATAN
         </h2>
 
-        <GalleryGrid images={preview} variant="preview" priorityCount={2} />
+        <div className="space-y-8">
+          <GalleryGrid
+            images={previewImages}
+            variant="preview"
+            priorityCount={2}
+            groupByYear
+          />
+        </div>
 
         <div className="mt-8 flex justify-center">
           <Link

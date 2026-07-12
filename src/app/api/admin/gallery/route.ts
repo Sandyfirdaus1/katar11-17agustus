@@ -10,7 +10,7 @@ export async function GET() {
   try {
     await requireAdmin();
     await connectDB();
-    const images = await Gallery.find().sort({ order: 1 });
+    const images = await Gallery.find().sort({ year: -1, order: 1 });
     return NextResponse.json(images);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,6 +25,8 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const alt = (formData.get("alt") as string) || "Dokumentasi kegiatan 17 Agustus";
+    const yearInput = Number(formData.get("year"));
+    const year = yearInput > 1900 ? yearInput : new Date().getFullYear();
 
     if (!file) {
       return NextResponse.json({ error: "File wajib diupload" }, { status: 400 });
@@ -42,6 +44,7 @@ export async function POST(request: Request) {
     const image = await Gallery.create({
       src: `/images/galeri-kegiatan/${filename}`,
       alt,
+      year,
       order: count,
     });
 

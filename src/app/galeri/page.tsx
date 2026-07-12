@@ -26,8 +26,8 @@ export default async function GaleriPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
-        <GalleryGrid images={images} variant="full" priorityCount={4} />
+      <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 md:space-y-10 md:px-6">
+        <GalleryGrid images={images} variant="full" priorityCount={4} groupByYear />
       </div>
     </main>
   );

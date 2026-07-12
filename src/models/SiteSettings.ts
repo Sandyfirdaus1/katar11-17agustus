@@ -48,7 +48,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
     whatsappLink: { type: String, default: "6289517872311" },
     locationName: { type: String, default: "Lingkungan RT 011" },
     locationAddress: { type: String, default: "Jl Walang Sari Raya" },
-    footerCopyright: { type: String, default: "© 2026 Katar 11. Dirgahayu Republik Indonesia." },
+    footerCopyright: { type: String, default: "© 2026 Crew RT 011. Dirgahayu Republik Indonesia." },
     footerCredit: { type: String, default: "Dibuat Oleh Shandy" },
   },
   { timestamps: true }

@@ -1,28 +1,49 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
-
-interface GalleryImage {
-  src: string;
-  alt: string;
-}
+import {
+  groupGalleryByYear,
+  type GalleryImageItem,
+  type GalleryYearSection,
+} from "@/lib/gallery-utils";
 
 interface GalleryGridProps {
-  images: GalleryImage[];
+  images: GalleryImageItem[];
   variant?: "preview" | "full";
   priorityCount?: number;
+  groupByYear?: boolean;
 }
 
 export default function GalleryGrid({
   images,
   variant = "full",
   priorityCount = 4,
+  groupByYear = false,
 }: GalleryGridProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  const activeImage = activeIndex !== null ? images[activeIndex] : null;
+  const sections = useMemo(
+    () => (groupByYear ? groupGalleryByYear(images) : [{ year: 0, images }]),
+    [images, groupByYear]
+  );
+
+  const flatImages = useMemo(() => sections.flatMap((section) => section.images), [sections]);
+
+  const imageIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    let index = 0;
+    for (const section of sections) {
+      for (const image of section.images) {
+        map.set(`${section.year}-${image.src}`, index);
+        index += 1;
+      }
+    }
+    return map;
+  }, [sections]);
+
+  const activeImage = activeIndex !== null ? flatImages[activeIndex] : null;
   const gridClass =
     variant === "preview"
       ? "grid grid-cols-2 gap-4 md:grid-cols-4"
@@ -38,7 +59,7 @@ export default function GalleryGrid({
       }
       if (e.key === "ArrowRight") {
         setActiveIndex((index) =>
-          index !== null && index < images.length - 1 ? index + 1 : index
+          index !== null && index < flatImages.length - 1 ? index + 1 : index
         );
       }
     }
@@ -49,33 +70,93 @@ export default function GalleryGrid({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [activeIndex, images.length]);
+  }, [activeIndex, flatImages.length]);
+
+  function renderSection(section: GalleryYearSection) {
+    if (!groupByYear) {
+      return (
+        <div className={gridClass}>
+          {section.images.map((item) => {
+            const index = imageIndexMap.get(`${section.year}-${item.src}`) ?? 0;
+            const isPriority = index < priorityCount;
+
+            return (
+              <button
+                key={`${section.year}-${item.src}`}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                className="group relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-xl bg-gray-100 shadow-md transition-transform hover:scale-[1.02]"
+                aria-label={`Perbesar ${item.alt}`}
+              >
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  fill
+                  sizes={
+                    variant === "preview"
+                      ? "(max-width: 768px) 50vw, 25vw"
+                      : "(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  }
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  priority={isPriority}
+                />
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return (
+      <section
+        key={section.year}
+        className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-8"
+      >
+        <div className="mb-5 flex items-center justify-between gap-3 border-b border-gray-100 pb-4">
+          <h3 className="text-xl font-extrabold tracking-wide text-[#DC2626] md:text-2xl">
+            Tahun {section.year}
+          </h3>
+          <span className="shrink-0 rounded-full bg-[#DC2626]/10 px-3 py-1 text-xs font-semibold text-[#DC2626]">
+            {section.images.length} foto
+          </span>
+        </div>
+        <div className={gridClass}>
+          {section.images.map((item) => {
+            const index = imageIndexMap.get(`${section.year}-${item.src}`) ?? 0;
+            const isPriority = index < priorityCount;
+
+            return (
+              <button
+                key={`${section.year}-${item.src}`}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                className="group relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-xl bg-gray-100 shadow-md transition-transform hover:scale-[1.02]"
+                aria-label={`Perbesar ${item.alt}`}
+              >
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  fill
+                  sizes={
+                    variant === "preview"
+                      ? "(max-width: 768px) 50vw, 25vw"
+                      : "(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  }
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  priority={isPriority}
+                />
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>
-      <div className={gridClass}>
-        {images.map((item, index) => (
-          <button
-            key={item.src}
-            type="button"
-            onClick={() => setActiveIndex(index)}
-            className="group relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-xl bg-gray-100 shadow-md transition-transform hover:scale-[1.02]"
-            aria-label={`Perbesar ${item.alt}`}
-          >
-            <Image
-              src={item.src}
-              alt={item.alt}
-              fill
-              sizes={
-                variant === "preview"
-                  ? "(max-width: 768px) 50vw, 25vw"
-                  : "(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              }
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              priority={index < priorityCount}
-            />
-          </button>
-        ))}
+      <div className={groupByYear ? "space-y-8 md:space-y-10" : undefined}>
+        {sections.map((section) => renderSection(section))}
       </div>
 
       {activeImage && activeIndex !== null && (
@@ -123,7 +204,7 @@ export default function GalleryGrid({
             />
           </div>
 
-          {activeIndex < images.length - 1 && (
+          {activeIndex < flatImages.length - 1 && (
             <button
               type="button"
               onClick={(e) => {
