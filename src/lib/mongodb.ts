@@ -19,7 +19,17 @@ const cached: MongooseCache = global.mongooseCache ?? {
 global.mongooseCache = cached;
 
 function getMongoUri() {
-  return process.env.MONGODB_URI || "mongodb://localhost:27017/katar11-lomba";
+  const uri = process.env.MONGODB_URI?.trim();
+
+  if (uri) return uri;
+
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    throw new Error(
+      "MONGODB_URI belum dikonfigurasi. Tambahkan di Vercel → Settings → Environment Variables."
+    );
+  }
+
+  return "mongodb://127.0.0.1:27017/katar11-lomba";
 }
 
 export async function connectDB() {

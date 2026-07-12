@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getSettings, getUniqueLomba } from "@/lib/data";
+import { getSettings, getLombaGroups } from "@/lib/data";
 import DaftarForm from "./DaftarForm";
 
 export const revalidate = 60;
 
 export default async function DaftarPage() {
-  const [settings, categories] = await Promise.all([getSettings(), getUniqueLomba()]);
+  const [settings, lombaGroups] = await Promise.all([getSettings(), getLombaGroups()]);
 
   return (
     <main className="min-h-screen bg-[#fafafa]">
@@ -26,7 +26,7 @@ export default async function DaftarPage() {
 
       <div className="mx-auto max-w-lg px-4 py-8 md:px-6">
         <DaftarForm
-          categories={categories}
+          lombaGroups={lombaGroups}
           registrationOpen={settings.registrationOpen !== false}
         />
       </div>

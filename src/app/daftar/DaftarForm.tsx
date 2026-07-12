@@ -1,15 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, UserPlus, Lock } from "lucide-react";
+import { getLombaForAge } from "@/lib/lomba-age";
+
+interface LombaGroupItem {
+  age: string;
+  lomba: string[];
+}
 
 interface DaftarFormProps {
-  categories: string[];
+  lombaGroups: LombaGroupItem[];
   registrationOpen: boolean;
 }
 
-export default function DaftarForm({ categories, registrationOpen }: DaftarFormProps) {
+export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarFormProps) {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [phone, setPhone] = useState("");
@@ -17,6 +23,19 @@ export default function DaftarForm({ categories, registrationOpen }: DaftarFormP
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+
+  const ageNum = Number(age);
+  const isValidAge = age !== "" && ageNum >= 1 && ageNum <= 120;
+  const availableLomba = useMemo(
+    () => (isValidAge ? getLombaForAge(lombaGroups, ageNum) : []),
+    [lombaGroups, isValidAge, ageNum]
+  );
+
+  useEffect(() => {
+    if (category && !availableLomba.includes(category)) {
+      setCategory("");
+    }
+  }, [availableLomba, category]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,6 +51,12 @@ export default function DaftarForm({ categories, registrationOpen }: DaftarFormP
     const ageNum = Number(age);
     if (ageNum < 1 || ageNum > 120) {
       setError("Usia harus diisi dengan angka antara 1–120.");
+      setLoading(false);
+      return;
+    }
+
+    if (!availableLomba.includes(category)) {
+      setError("Pilihan lomba tidak sesuai dengan usia Anda.");
       setLoading(false);
       return;
     }
@@ -169,15 +194,27 @@ export default function DaftarForm({ categories, registrationOpen }: DaftarFormP
             required
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
+            disabled={!isValidAge || availableLomba.length === 0}
+            className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626] disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
           >
-            <option value="">Pilih lomba</option>
-            {categories.map((cat) => (
+            <option value="">
+              {!isValidAge
+                ? "Isi usia terlebih dahulu"
+                : availableLomba.length === 0
+                  ? "Tidak ada lomba untuk usia ini"
+                  : "Pilih lomba"}
+            </option>
+            {availableLomba.map((cat) => (
               <option key={cat} value={cat}>
                 {cat}
               </option>
             ))}
           </select>
+          {isValidAge && availableLomba.length > 0 && (
+            <p className="mt-1 text-xs text-gray-500">
+              Menampilkan {availableLomba.length} lomba sesuai usia {ageNum} tahun
+            </p>
+          )}
         </div>
 
         {error && <p className="mb-4 text-center text-sm text-red-600">{error}</p>}

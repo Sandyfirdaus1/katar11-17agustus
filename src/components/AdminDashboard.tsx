@@ -95,9 +95,9 @@ const DEFAULT_SETTINGS: SiteSettings = {
   eventTime: "08.00 - SELESAI",
   eventLocation: "LINGKUNGAN RT 011",
   eventAudience: "BALITA HINGGA DEWASA",
-  whatsapp: "0812-3456-7890",
-  whatsappLabel: "(Ketua Katar 11)",
-  whatsappLink: "6281234567890",
+  whatsapp: "0895-1787-2311",
+  whatsappLabel: "Pengelola Web Lomba 17 Agustus",
+  whatsappLink: "6289517872311",
   locationName: "Lingkungan RT 011",
   locationAddress: "Jl Walang Sari Raya",
   footerCopyright: "© 2026 Katar 11. Dirgahayu Republik Indonesia.",
@@ -438,15 +438,44 @@ export default function AdminDashboard() {
 
               {lombaGroups.map((group) => (
                 <div key={group._id} className="rounded-xl border border-gray-200 p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <p className="font-extrabold text-[#DC2626]">{group.group}</p>
-                      <p className="text-xs text-gray-500">{group.age}</p>
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="grid flex-1 gap-3 md:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-gray-600">Nama kategori</label>
+                        <input
+                          value={group.group}
+                          onChange={(e) =>
+                            setLombaGroups((prev) =>
+                              prev.map((g) =>
+                                g._id === group._id ? { ...g, group: e.target.value } : g
+                              )
+                            )
+                          }
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-[#DC2626]"
+                          placeholder="Nama kategori"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-gray-600">Rentang usia</label>
+                        <input
+                          value={group.age}
+                          onChange={(e) =>
+                            setLombaGroups((prev) =>
+                              prev.map((g) =>
+                                g._id === group._id ? { ...g, age: e.target.value } : g
+                              )
+                            )
+                          }
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
+                          placeholder="Rentang usia"
+                        />
+                      </div>
                     </div>
-                    <button onClick={() => deleteLombaGroup(group._id)} className="text-red-500 hover:text-red-700">
+                    <button onClick={() => deleteLombaGroup(group._id)} className="mt-5 text-red-500 hover:text-red-700">
                       <Trash2 size={18} />
                     </button>
                   </div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">Daftar lomba</label>
                   <textarea
                     value={group.lomba.join(", ")}
                     onChange={(e) =>
@@ -463,7 +492,17 @@ export default function AdminDashboard() {
                     placeholder="Pisahkan dengan koma"
                   />
                   <button
-                    onClick={() => updateLombaGroup(group._id, { lomba: group.lomba })}
+                    onClick={() => {
+                      if (!group.group.trim() || !group.age.trim()) {
+                        showMsg("Nama kategori dan rentang usia wajib diisi");
+                        return;
+                      }
+                      updateLombaGroup(group._id, {
+                        group: group.group.trim(),
+                        age: group.age.trim(),
+                        lomba: group.lomba.filter(Boolean),
+                      });
+                    }}
                     className="mt-2 text-xs font-semibold text-[#DC2626] hover:underline"
                   >
                     Simpan perubahan

@@ -46,9 +46,9 @@ const defaultSettings = {
   eventTime: "08.00 - SELESAI",
   eventLocation: "LINGKUNGAN RT 011",
   eventAudience: "BALITA HINGGA DEWASA",
-  whatsapp: "0812-3456-7890",
-  whatsappLabel: "(Ketua Katar 11)",
-  whatsappLink: "6281234567890",
+  whatsapp: "0895-1787-2311",
+  whatsappLabel: "Pengelola Web Lomba 17 Agustus",
+  whatsappLink: "6289517872311",
   locationName: "Lingkungan RT 011",
   locationAddress: "Jl Walang Sari Raya",
   footerCopyright: "© 2026 Katar 11. Dirgahayu Republik Indonesia.",
@@ -192,4 +192,8 @@ export async function getUniqueLomba(): Promise<string[]> {
 
 export async function getFreshSettings() {
   return fetchSettings();
+}
+
+export async function getFreshLombaGroups() {
+  return fetchLombaGroups();
 }

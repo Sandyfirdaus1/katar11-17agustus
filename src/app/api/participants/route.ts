@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Participant } from "@/models/Participant";
-import { getFreshSettings, getParticipants } from "@/lib/data";
+import { getFreshSettings, getFreshLombaGroups, getParticipants } from "@/lib/data";
 import { revalidateParticipantData } from "@/lib/revalidate-public";
+import { isLombaValidForAge } from "@/lib/lomba-age";
 
 export async function GET() {
   try {
@@ -38,6 +39,23 @@ export async function POST(request: Request) {
     }
 
     const trimmedName = name.trim();
+    const ageNum = Number(age);
+
+    if (ageNum < 1 || ageNum > 120) {
+      return NextResponse.json(
+        { error: "Usia harus diisi dengan angka antara 1–120." },
+        { status: 400 }
+      );
+    }
+
+    const lombaGroups = await getFreshLombaGroups();
+    if (!isLombaValidForAge(lombaGroups, ageNum, category.trim())) {
+      return NextResponse.json(
+        { error: "Pilihan lomba tidak sesuai dengan usia peserta." },
+        { status: 400 }
+      );
+    }
+
     const existing = await Participant.findOne({
       name: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
     });
@@ -51,7 +69,7 @@ export async function POST(request: Request) {
 
     const participant = await Participant.create({
       name: trimmedName,
-      age: Number(age),
+      age: ageNum,
       phone: phone.trim(),
       category: category.trim(),
       status: "terdaftar",

@@ -1,4 +1,5 @@
-import { Phone, MapPin } from "lucide-react";
+import Link from "next/link";
+import { Phone, MapPin, Settings } from "lucide-react";
 
 interface FooterProps {
   settings: {
@@ -65,6 +66,14 @@ export default function Footer({ settings }: FooterProps) {
       </div>
 
       <div className="relative bg-[#991B1B] px-4 py-4 text-center">
+        <Link
+          href="/admin"
+          className="mb-3 inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[10px] text-white/40 transition-colors hover:border-white/25 hover:text-white/70"
+          title="Admin Panel"
+        >
+          <Settings size={11} />
+          <span>Admin</span>
+        </Link>
         <p className="text-xs text-white/90 md:text-sm">{settings.footerCopyright}</p>
         <p className="mt-1 text-xs text-white/70 md:text-sm">{settings.footerCredit}</p>
       </div>

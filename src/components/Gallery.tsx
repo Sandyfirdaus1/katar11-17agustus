@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Images, ChevronRight } from "lucide-react";
+import GalleryGrid from "./GalleryGrid";
 
 interface GalleryProps {
   images: { src: string; alt: string }[];
@@ -16,23 +16,7 @@ export default function Gallery({ images }: GalleryProps) {
           GALERI KEGIATAN
         </h2>
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {preview.map((item, index) => (
-            <div
-              key={item.src}
-              className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 shadow-md transition-transform hover:scale-[1.02]"
-            >
-              <Image
-                src={item.src}
-                alt={item.alt}
-                fill
-                sizes="(max-width: 768px) 50vw, 25vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                priority={index < 2}
-              />
-            </div>
-          ))}
-        </div>
+        <GalleryGrid images={preview} variant="preview" priorityCount={2} />
 
         <div className="mt-8 flex justify-center">
           <Link

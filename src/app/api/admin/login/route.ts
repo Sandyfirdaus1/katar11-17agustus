@@ -36,6 +36,10 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Gagal login";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const isConfigError = message.includes("MONGODB_URI");
+    return NextResponse.json(
+      { error: isConfigError ? message : "Gagal login. Periksa koneksi database." },
+      { status: isConfigError ? 503 : 500 }
+    );
   }
 }
