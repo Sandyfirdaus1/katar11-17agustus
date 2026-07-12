@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run build
+        env:
+          MONGODB_URI: mongodb://localhost:27017/katar11-lomba-test
+          JWT_SECRET: ci-test-jwt-secret-minimal-32-chars
+          ADMIN_USERNAME: admin
+          ADMIN_PASSWORD: admin123
+          SEED_SECRET: ci-test-seed-secret

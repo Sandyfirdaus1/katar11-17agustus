@@ -1,0 +1,627 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import {
+  Settings,
+  Trophy,
+  Images,
+  Users,
+  LogOut,
+  Save,
+  Plus,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
+  Search,
+} from "lucide-react";
+
+type Tab = "settings" | "lomba" | "galeri" | "peserta";
+
+interface SiteSettings {
+  aboutHighlight: string;
+  aboutDescription: string;
+  countdownDate: string;
+  countdownLabel: string;
+  announcementTitle: string;
+  announcementDeadline: string;
+  announcementNote: string;
+  registrationOpen: boolean;
+  eventDate: string;
+  eventTime: string;
+  eventLocation: string;
+  eventAudience: string;
+  whatsapp: string;
+  whatsappLabel: string;
+  whatsappLink: string;
+  locationName: string;
+  locationAddress: string;
+  footerCopyright: string;
+  footerCredit: string;
+}
+
+interface LombaItem {
+  _id: string;
+  group: string;
+  age: string;
+  lomba: string[];
+  order: number;
+}
+
+interface GalleryItem {
+  _id: string;
+  src: string;
+  alt: string;
+  order: number;
+}
+
+interface Participant {
+  _id: string;
+  name: string;
+  age: number;
+  phone: string;
+  category: string;
+  status: string;
+}
+
+const statusOptions = [
+  { value: "terdaftar", label: "Terdaftar" },
+  { value: "lolos", label: "Lolos" },
+  { value: "juara1", label: "Juara 1" },
+  { value: "juara2", label: "Juara 2" },
+  { value: "juara3", label: "Juara 3" },
+  { value: "didiskualifikasi", label: "Didiskualifikasi" },
+];
+
+const tabs = [
+  { id: "settings" as Tab, label: "Pengaturan", icon: Settings },
+  { id: "lomba" as Tab, label: "Lomba", icon: Trophy },
+  { id: "galeri" as Tab, label: "Galeri", icon: Images },
+  { id: "peserta" as Tab, label: "Peserta", icon: Users },
+];
+
+const DEFAULT_SETTINGS: SiteSettings = {
+  aboutHighlight: "Kegiatan 17 Agustus 2026 RT 011",
+  aboutDescription:
+    "merupakan wujud rasa syukur atas kemerdekaan Indonesia. Mari kita pererat persaudaraan, junjung sportivitas, dan ciptakan momen berharga bersama.",
+  countdownDate: "2026-08-17",
+  countdownLabel: "MENUJU 17 AGUSTUS 2026",
+  announcementTitle: "PENDAFTARAN DITUTUP",
+  announcementDeadline: "16 AGUSTUS 2026 PUKUL 21.00 WIB",
+  announcementNote: "Segera daftarkan diri Anda untuk mengikuti berbagai lomba menarik!",
+  registrationOpen: true,
+  eventDate: "17 AGUSTUS 2026",
+  eventTime: "08.00 - SELESAI",
+  eventLocation: "LINGKUNGAN RT 011",
+  eventAudience: "BALITA HINGGA DEWASA",
+  whatsapp: "0812-3456-7890",
+  whatsappLabel: "(Ketua Katar 11)",
+  whatsappLink: "6281234567890",
+  locationName: "Lingkungan RT 011",
+  locationAddress: "Jl Walang Sari Raya",
+  footerCopyright: "© 2026 Katar 11. Dirgahayu Republik Indonesia.",
+  footerCredit: "Dibuat Oleh Shandy",
+};
+
+function normalizeSettings(data: Partial<SiteSettings>): SiteSettings {
+  return {
+    aboutHighlight: data.aboutHighlight ?? DEFAULT_SETTINGS.aboutHighlight,
+    aboutDescription: data.aboutDescription ?? DEFAULT_SETTINGS.aboutDescription,
+    countdownDate: data.countdownDate ?? DEFAULT_SETTINGS.countdownDate,
+    countdownLabel: data.countdownLabel ?? DEFAULT_SETTINGS.countdownLabel,
+    announcementTitle: data.announcementTitle ?? DEFAULT_SETTINGS.announcementTitle,
+    announcementDeadline: data.announcementDeadline ?? DEFAULT_SETTINGS.announcementDeadline,
+    announcementNote: data.announcementNote ?? DEFAULT_SETTINGS.announcementNote,
+    registrationOpen: data.registrationOpen ?? DEFAULT_SETTINGS.registrationOpen,
+    eventDate: data.eventDate ?? DEFAULT_SETTINGS.eventDate,
+    eventTime: data.eventTime ?? DEFAULT_SETTINGS.eventTime,
+    eventLocation: data.eventLocation ?? DEFAULT_SETTINGS.eventLocation,
+    eventAudience: data.eventAudience ?? DEFAULT_SETTINGS.eventAudience,
+    whatsapp: data.whatsapp ?? DEFAULT_SETTINGS.whatsapp,
+    whatsappLabel: data.whatsappLabel ?? DEFAULT_SETTINGS.whatsappLabel,
+    whatsappLink: data.whatsappLink ?? DEFAULT_SETTINGS.whatsappLink,
+    locationName: data.locationName ?? DEFAULT_SETTINGS.locationName,
+    locationAddress: data.locationAddress ?? DEFAULT_SETTINGS.locationAddress,
+    footerCopyright: data.footerCopyright ?? DEFAULT_SETTINGS.footerCopyright,
+    footerCredit: data.footerCredit ?? DEFAULT_SETTINGS.footerCredit,
+  };
+}
+
+function Input({ label, value, onChange, type = "text" }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-semibold text-gray-600">{label}</label>
+      <input
+        type={type}
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#DC2626]"
+      />
+    </div>
+  );
+}
+
+function Textarea({ label, value, onChange }: {
+  label: string; value: string; onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-semibold text-gray-600">{label}</label>
+      <textarea
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#DC2626]"
+      />
+    </div>
+  );
+}
+
+export default function AdminDashboard() {
+  const router = useRouter();
+  const [tab, setTab] = useState<Tab>("settings");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [lombaGroups, setLombaGroups] = useState<LombaItem[]>([]);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+
+  const [newLomba, setNewLomba] = useState({ group: "", age: "", lomba: "" });
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [participantSearch, setParticipantSearch] = useState("");
+  const [participantLombaFilter, setParticipantLombaFilter] = useState("all");
+  const [participantStatusFilter, setParticipantStatusFilter] = useState("all");
+
+  useEffect(() => {
+    fetch("/api/admin/me")
+      .then((res) => {
+        if (!res.ok) router.push("/admin/login");
+        else loadAll();
+      })
+      .catch(() => router.push("/admin/login"));
+  }, [router]);
+
+  async function loadAll() {
+    setLoading(true);
+    try {
+      const [s, l, g, p] = await Promise.all([
+        fetch("/api/admin/settings").then((r) => r.json()),
+        fetch("/api/admin/lomba").then((r) => r.json()),
+        fetch("/api/admin/gallery").then((r) => r.json()),
+        fetch("/api/participants").then((r) => r.json()),
+      ]);
+      setSettings(normalizeSettings(s));
+      setLombaGroups(Array.isArray(l) ? l : []);
+      setGallery(Array.isArray(g) ? g : []);
+      setParticipants(Array.isArray(p) ? p : []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function showMsg(msg: string) {
+    setMessage(msg);
+    setTimeout(() => setMessage(""), 3000);
+  }
+
+  async function saveSettings() {
+    if (!settings) return;
+    setSaving(true);
+    const res = await fetch("/api/admin/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    setSaving(false);
+    showMsg(res.ok ? "Pengaturan berhasil disimpan!" : "Gagal menyimpan");
+  }
+
+  async function logout() {
+    await fetch("/api/admin/logout", { method: "POST" });
+    router.push("/admin/login");
+  }
+
+  async function addLombaGroup() {
+    if (!newLomba.group || !newLomba.age) return;
+    const res = await fetch("/api/admin/lomba", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        group: newLomba.group,
+        age: newLomba.age,
+        lomba: newLomba.lomba.split(",").map((s) => s.trim()).filter(Boolean),
+        order: lombaGroups.length,
+      }),
+    });
+    if (res.ok) {
+      setNewLomba({ group: "", age: "", lomba: "" });
+      const data = await fetch("/api/admin/lomba").then((r) => r.json());
+      setLombaGroups(data);
+      showMsg("Kategori lomba ditambahkan");
+    }
+  }
+
+  async function updateLombaGroup(id: string, data: Partial<LombaItem>) {
+    await fetch(`/api/admin/lomba/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const updated = await fetch("/api/admin/lomba").then((r) => r.json());
+    setLombaGroups(updated);
+    showMsg("Lomba diperbarui");
+  }
+
+  async function deleteLombaGroup(id: string) {
+    if (!confirm("Hapus kategori lomba ini?")) return;
+    await fetch(`/api/admin/lomba/${id}`, { method: "DELETE" });
+    setLombaGroups((prev) => prev.filter((g) => g._id !== id));
+    showMsg("Kategori lomba dihapus");
+  }
+
+  async function uploadGallery() {
+    if (!uploadFile) return;
+    const formData = new FormData();
+    formData.append("file", uploadFile);
+    const res = await fetch("/api/admin/gallery", { method: "POST", body: formData });
+    if (res.ok) {
+      setUploadFile(null);
+      const data = await fetch("/api/admin/gallery").then((r) => r.json());
+      setGallery(data);
+      showMsg("Gambar berhasil diupload");
+    }
+  }
+
+  async function deleteGallery(id: string) {
+    if (!confirm("Hapus gambar ini?")) return;
+    await fetch(`/api/admin/gallery/${id}`, { method: "DELETE" });
+    setGallery((prev) => prev.filter((g) => g._id !== id));
+    showMsg("Gambar dihapus");
+  }
+
+  async function updateParticipant(id: string, status: string) {
+    await fetch(`/api/admin/participants/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    setParticipants((prev) =>
+      prev.map((p) => (p._id === id ? { ...p, status } : p))
+    );
+    showMsg("Status peserta diperbarui");
+  }
+
+  async function deleteParticipant(id: string) {
+    if (!confirm("Hapus peserta ini?")) return;
+    await fetch(`/api/admin/participants/${id}`, { method: "DELETE" });
+    setParticipants((prev) => prev.filter((p) => p._id !== id));
+    showMsg("Peserta dihapus");
+  }
+
+  if (loading || !settings) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f5f5]">
+        <p className="text-gray-500">Memuat...</p>
+      </div>
+    );
+  }
+
+  const lombaOptions = [
+    ...new Set([
+      ...lombaGroups.flatMap((g) => g.lomba),
+      ...participants.map((p) => p.category),
+    ]),
+  ].sort();
+
+  const filteredParticipants = participants.filter((p) => {
+    const matchSearch =
+      p.name.toLowerCase().includes(participantSearch.toLowerCase()) ||
+      p.phone.includes(participantSearch);
+    const matchLomba =
+      participantLombaFilter === "all" || p.category === participantLombaFilter;
+    const matchStatus =
+      participantStatusFilter === "all" || p.status === participantStatusFilter;
+    return matchSearch && matchLomba && matchStatus;
+  });
+
+  return (
+    <div className="min-h-screen bg-[#f5f5f5]">
+      <header className="bg-[#DC2626] px-4 py-4 text-white md:px-6">
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
+          <div>
+            <h1 className="text-lg font-extrabold md:text-xl">ADMIN PANEL</h1>
+            <p className="text-xs text-white/70">RT 011 — 17 Agustus 2026</p>
+          </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/30"
+          >
+            <LogOut size={16} /> Keluar
+          </button>
+        </div>
+      </header>
+
+      {message && (
+        <div className="bg-green-600 px-4 py-2 text-center text-sm font-semibold text-white">
+          {message}
+        </div>
+      )}
+
+      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6">
+        <div className="mb-6 flex flex-wrap gap-2">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                tab === t.id
+                  ? "bg-[#DC2626] text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <t.icon size={16} /> {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          {tab === "settings" && (
+            <div className="space-y-6">
+              <h2 className="text-lg font-extrabold text-[#DC2626]">Pengaturan Website</h2>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input label="Judul Tentang Acara" value={settings.aboutHighlight} onChange={(v) => setSettings({ ...settings, aboutHighlight: v })} />
+                <Input label="Tanggal Acara" value={settings.eventDate} onChange={(v) => setSettings({ ...settings, eventDate: v })} />
+                <Input label="Waktu Acara" value={settings.eventTime} onChange={(v) => setSettings({ ...settings, eventTime: v })} />
+                <Input label="Lokasi Acara" value={settings.eventLocation} onChange={(v) => setSettings({ ...settings, eventLocation: v })} />
+                <Input label="Target Usia" value={settings.eventAudience} onChange={(v) => setSettings({ ...settings, eventAudience: v })} />
+                <Input label="Tanggal Countdown" value={settings.countdownDate} onChange={(v) => setSettings({ ...settings, countdownDate: v })} type="date" />
+                <Input label="Label Countdown" value={settings.countdownLabel} onChange={(v) => setSettings({ ...settings, countdownLabel: v })} />
+              </div>
+
+              <Textarea label="Deskripsi Tentang Acara" value={settings.aboutDescription} onChange={(v) => setSettings({ ...settings, aboutDescription: v })} />
+
+              <div className="border-t border-gray-100 pt-4">
+                <h3 className="mb-3 text-sm font-extrabold text-gray-800">Pengumuman & Pendaftaran</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Input label="Judul Pengumuman" value={settings.announcementTitle} onChange={(v) => setSettings({ ...settings, announcementTitle: v })} />
+                  <Input label="Batas Pendaftaran" value={settings.announcementDeadline} onChange={(v) => setSettings({ ...settings, announcementDeadline: v })} />
+                </div>
+                <div className="mt-4">
+                  <Textarea label="Catatan Pengumuman" value={settings.announcementNote} onChange={(v) => setSettings({ ...settings, announcementNote: v })} />
+                </div>
+                <button
+                  onClick={() => setSettings({ ...settings, registrationOpen: !settings.registrationOpen })}
+                  className="mt-4 flex items-center gap-2 text-sm font-semibold"
+                >
+                  {settings.registrationOpen ? (
+                    <ToggleRight size={28} className="text-green-600" />
+                  ) : (
+                    <ToggleLeft size={28} className="text-red-500" />
+                  )}
+                  Pendaftaran {settings.registrationOpen ? "DIBUKA" : "DITUTUP"}
+                </button>
+              </div>
+
+              <div className="border-t border-gray-100 pt-4">
+                <h3 className="mb-3 text-sm font-extrabold text-gray-800">Kontak & Footer</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Input label="WhatsApp" value={settings.whatsapp} onChange={(v) => setSettings({ ...settings, whatsapp: v })} />
+                  <Input label="Label WhatsApp" value={settings.whatsappLabel} onChange={(v) => setSettings({ ...settings, whatsappLabel: v })} />
+                  <Input label="Link WhatsApp (62xxx)" value={settings.whatsappLink} onChange={(v) => setSettings({ ...settings, whatsappLink: v })} />
+                  <Input label="Nama Lokasi" value={settings.locationName} onChange={(v) => setSettings({ ...settings, locationName: v })} />
+                  <Input label="Alamat Lokasi" value={settings.locationAddress} onChange={(v) => setSettings({ ...settings, locationAddress: v })} />
+                  <Input label="Copyright Footer" value={settings.footerCopyright} onChange={(v) => setSettings({ ...settings, footerCopyright: v })} />
+                  <Input label="Credit Footer" value={settings.footerCredit} onChange={(v) => setSettings({ ...settings, footerCredit: v })} />
+                </div>
+              </div>
+
+              <button
+                onClick={saveSettings}
+                disabled={saving}
+                className="flex items-center gap-2 rounded-lg bg-[#DC2626] px-6 py-3 text-sm font-bold text-white hover:bg-[#B91C1C] disabled:opacity-60"
+              >
+                <Save size={16} /> {saving ? "Menyimpan..." : "SIMPAN PENGATURAN"}
+              </button>
+            </div>
+          )}
+
+          {tab === "lomba" && (
+            <div className="space-y-6">
+              <h2 className="text-lg font-extrabold text-[#DC2626]">Kelola Lomba</h2>
+
+              {lombaGroups.map((group) => (
+                <div key={group._id} className="rounded-xl border border-gray-200 p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div>
+                      <p className="font-extrabold text-[#DC2626]">{group.group}</p>
+                      <p className="text-xs text-gray-500">{group.age}</p>
+                    </div>
+                    <button onClick={() => deleteLombaGroup(group._id)} className="text-red-500 hover:text-red-700">
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                  <textarea
+                    value={group.lomba.join(", ")}
+                    onChange={(e) =>
+                      setLombaGroups((prev) =>
+                        prev.map((g) =>
+                          g._id === group._id
+                            ? { ...g, lomba: e.target.value.split(",").map((s) => s.trim()) }
+                            : g
+                        )
+                      )
+                    }
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    rows={2}
+                    placeholder="Pisahkan dengan koma"
+                  />
+                  <button
+                    onClick={() => updateLombaGroup(group._id, { lomba: group.lomba })}
+                    className="mt-2 text-xs font-semibold text-[#DC2626] hover:underline"
+                  >
+                    Simpan perubahan
+                  </button>
+                </div>
+              ))}
+
+              <div className="rounded-xl border border-dashed border-gray-300 p-4">
+                <p className="mb-3 text-sm font-semibold text-gray-700">Tambah Kategori Lomba</p>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <input placeholder="Nama kategori" value={newLomba.group} onChange={(e) => setNewLomba({ ...newLomba, group: e.target.value })} className="rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+                  <input placeholder="Rentang usia" value={newLomba.age} onChange={(e) => setNewLomba({ ...newLomba, age: e.target.value })} className="rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+                  <input placeholder="Lomba (pisah koma)" value={newLomba.lomba} onChange={(e) => setNewLomba({ ...newLomba, lomba: e.target.value })} className="rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+                </div>
+                <button onClick={addLombaGroup} className="mt-3 flex items-center gap-1 text-sm font-semibold text-[#DC2626]">
+                  <Plus size={16} /> Tambah
+                </button>
+              </div>
+            </div>
+          )}
+
+          {tab === "galeri" && (
+            <div className="space-y-6">
+              <h2 className="text-lg font-extrabold text-[#DC2626]">Kelola Galeri</h2>
+
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {gallery.map((img) => (
+                  <div key={img._id} className="group relative aspect-square overflow-hidden rounded-xl bg-gray-100">
+                    <Image src={img.src} alt={img.alt} fill className="object-cover" />
+                    <button
+                      onClick={() => deleteGallery(img._id)}
+                      className="absolute right-2 top-2 rounded-full bg-red-600 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-xl border border-dashed border-gray-300 p-4">
+                <p className="mb-3 text-sm font-semibold text-gray-700">Upload Gambar Baru</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                  className="text-sm"
+                />
+                <button
+                  onClick={uploadGallery}
+                  disabled={!uploadFile}
+                  className="mt-3 flex items-center gap-1 rounded-lg bg-[#DC2626] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  <Plus size={16} /> Upload
+                </button>
+              </div>
+            </div>
+          )}
+
+          {tab === "peserta" && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-extrabold text-[#DC2626]">
+                Kelola Peserta ({filteredParticipants.length}
+                {filteredParticipants.length !== participants.length
+                  ? ` dari ${participants.length}`
+                  : ""}
+                )
+              </h2>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="relative flex-1">
+                  <Search
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Cari nama atau nomor telepon..."
+                    value={participantSearch}
+                    onChange={(e) => setParticipantSearch(e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#DC2626]"
+                  />
+                </div>
+                <select
+                  value={participantLombaFilter}
+                  onChange={(e) => setParticipantLombaFilter(e.target.value)}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#DC2626] sm:min-w-[180px]"
+                >
+                  <option value="all">Semua Lomba</option>
+                  {lombaOptions.map((lomba) => (
+                    <option key={lomba} value={lomba}>
+                      {lomba}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={participantStatusFilter}
+                  onChange={(e) => setParticipantStatusFilter(e.target.value)}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#DC2626] sm:min-w-[160px]"
+                >
+                  <option value="all">Semua Status</option>
+                  {statusOptions.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {filteredParticipants.length === 0 ? (
+                <div className="rounded-xl border border-gray-200 py-12 text-center text-sm text-gray-500">
+                  Tidak ada peserta yang cocok dengan filter.
+                </div>
+              ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-gray-200 bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 font-bold text-gray-700">Nama</th>
+                      <th className="px-4 py-3 font-bold text-gray-700">Usia</th>
+                      <th className="px-4 py-3 font-bold text-gray-700">Telepon</th>
+                      <th className="px-4 py-3 font-bold text-gray-700">Lomba</th>
+                      <th className="px-4 py-3 font-bold text-gray-700">Status</th>
+                      <th className="px-4 py-3 font-bold text-gray-700">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredParticipants.map((p) => (
+                      <tr key={p._id} className="border-b border-gray-100">
+                        <td className="px-4 py-3 font-medium">{p.name}</td>
+                        <td className="px-4 py-3">{p.age}</td>
+                        <td className="px-4 py-3">{p.phone}</td>
+                        <td className="px-4 py-3">{p.category}</td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={p.status}
+                            onChange={(e) => updateParticipant(p._id, e.target.value)}
+                            className="rounded border border-gray-200 px-2 py-1 text-xs"
+                          >
+                            {statusOptions.map((s) => (
+                              <option key={s.value} value={s.value}>{s.label}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button onClick={() => deleteParticipant(p._id)} className="text-red-500 hover:text-red-700">
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
