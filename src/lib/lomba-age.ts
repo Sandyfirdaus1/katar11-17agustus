@@ -29,7 +29,10 @@ export function getLombaForAge(groups: LombaGroupLike[], age: number): string[] 
     if (range) {
       const isDirectMatch = age >= range.min && age <= range.max;
       // Special rule: Dewasa (21-40) can also register for Remaja (10-20)
-      const isDewasaRegisteringRemaja = (age >= 21 && age <= 40) && group.group.toLowerCase() === "remaja";
+      const isDewasaRegisteringRemaja =
+        age >= 21 &&
+        age <= 40 &&
+        group.age === "10-20";
 
       if (isDirectMatch || isDewasaRegisteringRemaja) {
         matches.push(...group.lomba);
