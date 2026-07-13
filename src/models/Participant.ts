@@ -12,6 +12,7 @@ export interface IParticipant {
   name: string;
   age: number;
   phone: string;
+  address: string;
   category: string;
   status: ParticipantStatus;
   createdAt?: Date;
@@ -23,6 +24,7 @@ const ParticipantSchema = new Schema<IParticipant>(
     name: { type: String, required: true, trim: true },
     age: { type: Number, required: true, min: 1, max: 120 },
     phone: { type: String, required: true, trim: true },
+    address: { type: String, required: true, trim: true },
     category: { type: String, required: true },
     status: {
       type: String,

@@ -17,11 +17,11 @@ export default function Lomba({ groups }: LombaProps) {
           Kegiatan lomba untuk semua usia, dari balita hingga dewasa
         </p>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-wrap justify-center gap-6">
           {groups.map((group) => (
             <div
               key={group.group}
-              className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+              className="w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] max-w-[340px] rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md"
             >
               <div className="mb-4 border-b border-gray-100 pb-3">
                 <p className="text-sm font-extrabold uppercase tracking-wide text-[#DC2626]">

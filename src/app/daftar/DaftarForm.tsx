@@ -19,6 +19,7 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
   const [category, setCategory] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -42,7 +43,7 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
     setLoading(true);
     setError("");
 
-    if (!name.trim() || !age || !phone.trim() || !category) {
+    if (!name.trim() || !age || !phone.trim() || !address.trim() || !category) {
       setError("Semua field wajib diisi.");
       setLoading(false);
       return;
@@ -65,7 +66,7 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
       const res = await fetch("/api/participants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, age: ageNum, phone, category, status: "terdaftar" }),
+        body: JSON.stringify({ name, age: ageNum, phone, address, category, status: "terdaftar" }),
       });
 
       const data = await res.json();
@@ -79,6 +80,7 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
       setName("");
       setAge("");
       setPhone("");
+      setAddress("");
       setCategory("");
     } catch {
       setError("Gagal mendaftar. Silakan coba lagi.");
@@ -94,12 +96,12 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
         <p className="mt-2 text-sm text-green-700">
           Terima kasih telah mendaftar. Sampai jumpa di acara!
         </p>
-        <Link
+        <a
           href="/"
           className="mt-4 inline-block rounded-lg bg-[#DC2626] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#B91C1C]"
         >
           Kembali ke Beranda
-        </Link>
+        </a>
       </div>
     );
   }
@@ -112,12 +114,12 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
         <p className="mt-2 text-sm text-red-700">
           Pendaftaran lomba sudah ditutup. Silakan hubungi panitia untuk info lebih lanjut.
         </p>
-        <Link
+        <a
           href="/"
           className="mt-4 inline-block rounded-lg bg-[#DC2626] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#B91C1C]"
         >
           Kembali ke Beranda
-        </Link>
+        </a>
       </div>
     );
   }
@@ -181,6 +183,21 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Contoh: 081234567890"
+            className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="address" className="mb-1 block text-sm font-semibold text-gray-700">
+            Alamat
+          </label>
+          <textarea
+            id="address"
+            required
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="Masukkan alamat lengkap"
+            rows={3}
             className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
           />
         </div>

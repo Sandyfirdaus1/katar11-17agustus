@@ -6,7 +6,7 @@ export interface LombaGroupLike {
 export function parseAgeRange(ageLabel: string): { min: number; max: number } | null {
   const normalized = ageLabel
     .replace(/[–—]/g, "-")
-    .replace(/tahun/gi, "")
+    .replace(/tahun|thn/gi, "")
     .trim();
 
   const rangeMatch = normalized.match(/^(\d+)\s*-\s*(\d+)$/);
@@ -26,8 +26,14 @@ export function getLombaForAge(groups: LombaGroupLike[], age: number): string[] 
   const matches: string[] = [];
   for (const group of groups) {
     const range = parseAgeRange(group.age);
-    if (range && age >= range.min && age <= range.max) {
-      matches.push(...group.lomba);
+    if (range) {
+      const isDirectMatch = age >= range.min && age <= range.max;
+      // Special rule: Dewasa (21-40) can also register for Remaja (10-20)
+      const isDewasaRegisteringRemaja = (age >= 21 && age <= 40) && group.group.toLowerCase() === "remaja";
+
+      if (isDirectMatch || isDewasaRegisteringRemaja) {
+        matches.push(...group.lomba);
+      }
     }
   }
   return Array.from(new Set(matches));

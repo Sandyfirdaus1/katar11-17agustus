@@ -170,7 +170,7 @@ export default function GalleryGrid({
           <button
             type="button"
             onClick={() => setActiveIndex(null)}
-            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+            className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
             aria-label="Tutup"
           >
             <X size={24} />
@@ -183,7 +183,7 @@ export default function GalleryGrid({
                 e.stopPropagation();
                 setActiveIndex(activeIndex - 1);
               }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
               aria-label="Gambar sebelumnya"
             >
               <ChevronLeft size={28} />
@@ -211,7 +211,7 @@ export default function GalleryGrid({
                 e.stopPropagation();
                 setActiveIndex(activeIndex + 1);
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 md:right-16"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 md:right-16"
               aria-label="Gambar berikutnya"
             >
               <ChevronRight size={28} />

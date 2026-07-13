@@ -19,6 +19,7 @@ export type PublicParticipant = {
   name: string;
   age?: number;
   phone?: string;
+  address?: string;
   category: string;
   status: string;
 };
@@ -56,10 +57,9 @@ const defaultSettings = {
 };
 
 const defaultLomba = [
-  { group: "Balita", age: "0–5 tahun", lomba: ["Lomba Gerak Jalan", "Mewarnai Tema Kemerdekaan", "Menyanyi Lagu Anak"], order: 0 },
-  { group: "Anak-anak", age: "6–12 tahun", lomba: ["Balap Karung", "Makan Kerupuk", "Balap Kelereng", "Paku Bendera", "Estafet Air"], order: 1 },
-  { group: "Remaja", age: "13–17 tahun", lomba: ["Balap Karung", "Tarik Tambang", "Balap Bakiak", "Futsal", "Voli"], order: 2 },
-  { group: "Dewasa", age: "18+ tahun", lomba: ["Tarik Tambang", "Panjat Pinang", "Balap Karung", "Balap Bakiak", "Domino"], order: 3 },
+  { group: "Anak-anak", age: "3–9 tahun", lomba: ["Paku Dalam Botol", "Bendera Dalam Botol", "Estafet Air", "Balap Kelereng", "Makan Kerupuk", "Bola Keranjang"], order: 0 },
+  { group: "Remaja", age: "10–20 tahun", lomba: ["Balap Karung", "Makan Kerupuk", "Pukul Kendi", "Bakiak", "Joget Jeruk", "Ambil Koin Dalam Terigu", "Kerucut"], order: 1 },
+  { group: "Dewasa", age: "21–40 tahun", lomba: ["Bakiak", "Joget Jeruk", "Kerucut", "Rebutan Tempat Duduk"], order: 2 },
 ];
 
 const defaultGallery = Array.from({ length: 11 }, (_, i) => ({
@@ -132,7 +132,7 @@ async function fetchParticipants(): Promise<PublicParticipant[]> {
     await connectDB();
     const participants = await Participant.find()
       .sort({ createdAt: -1 })
-      .select("name age phone category status")
+      .select("name age phone address category status")
       .lean();
     return JSON.parse(JSON.stringify(participants));
   } catch {

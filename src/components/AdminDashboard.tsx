@@ -63,6 +63,7 @@ interface Participant {
   name: string;
   age: number;
   phone: string;
+  address: string;
   category: string;
   status: string;
 }
@@ -162,10 +163,37 @@ function Textarea({ label, value, onChange }: {
   );
 }
 
+function TabLoader() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-gray-500 text-sm">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#DC2626] mb-3"></div>
+      <p>Memuat data...</p>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("settings");
-  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const savedTab = localStorage.getItem("admin_active_tab") as Tab;
+    if (savedTab && ["settings", "lomba", "galeri", "peserta"].includes(savedTab)) {
+      setTab(savedTab);
+    }
+  }, []);
+
+  const handleTabChange = (newTab: Tab) => {
+    setTab(newTab);
+    localStorage.setItem("admin_active_tab", newTab);
+  };
+
+  const [authChecking, setAuthChecking] = useState(true);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [lombaLoading, setLombaLoading] = useState(true);
+  const [galleryLoading, setGalleryLoading] = useState(true);
+  const [participantsLoading, setParticipantsLoading] = useState(true);
+
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -186,28 +214,52 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetch("/api/admin/me")
       .then((res) => {
-        if (!res.ok) router.push("/admin/login");
-        else loadAll();
+        if (!res.ok) {
+          router.push("/admin/login");
+        } else {
+          setAuthChecking(false);
+          loadAllData();
+        }
       })
       .catch(() => router.push("/admin/login"));
   }, [router]);
 
-  async function loadAll() {
-    setLoading(true);
-    try {
-      const [s, l, g, p] = await Promise.all([
-        fetch("/api/admin/settings").then((r) => r.json()),
-        fetch("/api/admin/lomba").then((r) => r.json()),
-        fetch("/api/admin/gallery").then((r) => r.json()),
-        fetch("/api/participants").then((r) => r.json()),
-      ]);
-      setSettings(normalizeSettings(s));
-      setLombaGroups(Array.isArray(l) ? l : []);
-      setGallery(Array.isArray(g) ? g : []);
-      setParticipants(Array.isArray(p) ? p : []);
-    } finally {
-      setLoading(false);
-    }
+  async function loadAllData() {
+    // Fetch settings
+    fetch("/api/admin/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        setSettings(normalizeSettings(data));
+        setSettingsLoading(false);
+      })
+      .catch(() => setSettingsLoading(false));
+
+    // Fetch lomba
+    fetch("/api/admin/lomba")
+      .then((r) => r.json())
+      .then((data) => {
+        setLombaGroups(Array.isArray(data) ? data : []);
+        setLombaLoading(false);
+      })
+      .catch(() => setLombaLoading(false));
+
+    // Fetch gallery
+    fetch("/api/admin/gallery")
+      .then((r) => r.json())
+      .then((data) => {
+        setGallery(Array.isArray(data) ? data : []);
+        setGalleryLoading(false);
+      })
+      .catch(() => setGalleryLoading(false));
+
+    // Fetch participants
+    fetch(`/api/participants?t=${Date.now()}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setParticipants(Array.isArray(data) ? data : []);
+        setParticipantsLoading(false);
+      })
+      .catch(() => setParticipantsLoading(false));
   }
 
   function showMsg(msg: string) {
@@ -345,10 +397,11 @@ export default function AdminDashboard() {
     showMsg("Peserta dihapus");
   }
 
-  if (loading || !settings) {
+
+  if (authChecking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f5f5f5]">
-        <p className="text-gray-500">Memuat...</p>
+        <p className="text-gray-500 font-medium">Memuat...</p>
       </div>
     );
   }
@@ -363,7 +416,8 @@ export default function AdminDashboard() {
   const filteredParticipants = participants.filter((p) => {
     const matchSearch =
       p.name.toLowerCase().includes(participantSearch.toLowerCase()) ||
-      p.phone.includes(participantSearch);
+      p.phone.includes(participantSearch) ||
+      (p.address && p.address.toLowerCase().includes(participantSearch.toLowerCase()));
     const matchLomba =
       participantLombaFilter === "all" || p.category === participantLombaFilter;
     const matchStatus =
@@ -399,7 +453,7 @@ export default function AdminDashboard() {
           {tabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => handleTabChange(t.id)}
               className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
                 tab === t.id
                   ? "bg-[#DC2626] text-white"
@@ -413,71 +467,78 @@ export default function AdminDashboard() {
 
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           {tab === "settings" && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-extrabold text-[#DC2626]">Pengaturan Website</h2>
+            settingsLoading || !settings ? (
+              <TabLoader />
+            ) : (
+              <div className="space-y-6">
+                <h2 className="text-lg font-extrabold text-[#DC2626]">Pengaturan Website</h2>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <Input label="Judul Tentang Acara" value={settings.aboutHighlight} onChange={(v) => setSettings({ ...settings, aboutHighlight: v })} />
-                <Input label="Tanggal Acara" value={settings.eventDate} onChange={(v) => setSettings({ ...settings, eventDate: v })} />
-                <Input label="Waktu Acara" value={settings.eventTime} onChange={(v) => setSettings({ ...settings, eventTime: v })} />
-                <Input label="Lokasi Acara" value={settings.eventLocation} onChange={(v) => setSettings({ ...settings, eventLocation: v })} />
-                <Input label="Target Usia" value={settings.eventAudience} onChange={(v) => setSettings({ ...settings, eventAudience: v })} />
-                <Input label="Tanggal Countdown" value={settings.countdownDate} onChange={(v) => setSettings({ ...settings, countdownDate: v })} type="date" />
-                <Input label="Label Countdown" value={settings.countdownLabel} onChange={(v) => setSettings({ ...settings, countdownLabel: v })} />
-              </div>
-
-              <Textarea label="Deskripsi Tentang Acara" value={settings.aboutDescription} onChange={(v) => setSettings({ ...settings, aboutDescription: v })} />
-
-              <div className="border-t border-gray-100 pt-4">
-                <h3 className="mb-3 text-sm font-extrabold text-gray-800">Pengumuman & Pendaftaran</h3>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Input label="Judul Pengumuman" value={settings.announcementTitle} onChange={(v) => setSettings({ ...settings, announcementTitle: v })} />
-                  <Input label="Batas Pendaftaran" value={settings.announcementDeadline} onChange={(v) => setSettings({ ...settings, announcementDeadline: v })} />
+                  <Input label="Judul Tentang Acara" value={settings.aboutHighlight} onChange={(v) => setSettings({ ...settings, aboutHighlight: v })} />
+                  <Input label="Tanggal Acara" value={settings.eventDate} onChange={(v) => setSettings({ ...settings, eventDate: v })} />
+                  <Input label="Waktu Acara" value={settings.eventTime} onChange={(v) => setSettings({ ...settings, eventTime: v })} />
+                  <Input label="Lokasi Acara" value={settings.eventLocation} onChange={(v) => setSettings({ ...settings, eventLocation: v })} />
+                  <Input label="Target Usia" value={settings.eventAudience} onChange={(v) => setSettings({ ...settings, eventAudience: v })} />
+                  <Input label="Tanggal Countdown" value={settings.countdownDate} onChange={(v) => setSettings({ ...settings, countdownDate: v })} type="date" />
+                  <Input label="Label Countdown" value={settings.countdownLabel} onChange={(v) => setSettings({ ...settings, countdownLabel: v })} />
                 </div>
-                <div className="mt-4">
-                  <Textarea label="Catatan Pengumuman" value={settings.announcementNote} onChange={(v) => setSettings({ ...settings, announcementNote: v })} />
+
+                <Textarea label="Deskripsi Tentang Acara" value={settings.aboutDescription} onChange={(v) => setSettings({ ...settings, aboutDescription: v })} />
+
+                <div className="border-t border-gray-100 pt-4">
+                  <h3 className="mb-3 text-sm font-extrabold text-gray-800">Pengumuman & Pendaftaran</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Input label="Judul Pengumuman" value={settings.announcementTitle} onChange={(v) => setSettings({ ...settings, announcementTitle: v })} />
+                    <Input label="Batas Pendaftaran" value={settings.announcementDeadline} onChange={(v) => setSettings({ ...settings, announcementDeadline: v })} />
+                  </div>
+                  <div className="mt-4">
+                    <Textarea label="Catatan Pengumuman" value={settings.announcementNote} onChange={(v) => setSettings({ ...settings, announcementNote: v })} />
+                  </div>
+                  <button
+                    onClick={() => setSettings({ ...settings, registrationOpen: !settings.registrationOpen })}
+                    className="mt-4 flex items-center gap-2 text-sm font-semibold"
+                  >
+                    {settings.registrationOpen ? (
+                      <ToggleRight size={28} className="text-green-600" />
+                    ) : (
+                      <ToggleLeft size={28} className="text-red-500" />
+                    )}
+                    Pendaftaran {settings.registrationOpen ? "DIBUKA" : "DITUTUP"}
+                  </button>
                 </div>
+
+                <div className="border-t border-gray-100 pt-4">
+                  <h3 className="mb-3 text-sm font-extrabold text-gray-800">Kontak & Footer</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Input label="WhatsApp" value={settings.whatsapp} onChange={(v) => setSettings({ ...settings, whatsapp: v })} />
+                    <Input label="Label WhatsApp" value={settings.whatsappLabel} onChange={(v) => setSettings({ ...settings, whatsappLabel: v })} />
+                    <Input label="Link WhatsApp (62xxx)" value={settings.whatsappLink} onChange={(v) => setSettings({ ...settings, whatsappLink: v })} />
+                    <Input label="Nama Lokasi" value={settings.locationName} onChange={(v) => setSettings({ ...settings, locationName: v })} />
+                    <Input label="Alamat Lokasi" value={settings.locationAddress} onChange={(v) => setSettings({ ...settings, locationAddress: v })} />
+                    <Input label="Copyright Footer" value={settings.footerCopyright} onChange={(v) => setSettings({ ...settings, footerCopyright: v })} />
+                    <Input label="Credit Footer" value={settings.footerCredit} onChange={(v) => setSettings({ ...settings, footerCredit: v })} />
+                  </div>
+                </div>
+
                 <button
-                  onClick={() => setSettings({ ...settings, registrationOpen: !settings.registrationOpen })}
-                  className="mt-4 flex items-center gap-2 text-sm font-semibold"
+                  onClick={saveSettings}
+                  disabled={saving}
+                  className="flex items-center gap-2 rounded-lg bg-[#DC2626] px-6 py-3 text-sm font-bold text-white hover:bg-[#B91C1C] disabled:opacity-60"
                 >
-                  {settings.registrationOpen ? (
-                    <ToggleRight size={28} className="text-green-600" />
-                  ) : (
-                    <ToggleLeft size={28} className="text-red-500" />
-                  )}
-                  Pendaftaran {settings.registrationOpen ? "DIBUKA" : "DITUTUP"}
+                  <Save size={16} /> {saving ? "Menyimpan..." : "SIMPAN PENGATURAN"}
                 </button>
               </div>
-
-              <div className="border-t border-gray-100 pt-4">
-                <h3 className="mb-3 text-sm font-extrabold text-gray-800">Kontak & Footer</h3>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Input label="WhatsApp" value={settings.whatsapp} onChange={(v) => setSettings({ ...settings, whatsapp: v })} />
-                  <Input label="Label WhatsApp" value={settings.whatsappLabel} onChange={(v) => setSettings({ ...settings, whatsappLabel: v })} />
-                  <Input label="Link WhatsApp (62xxx)" value={settings.whatsappLink} onChange={(v) => setSettings({ ...settings, whatsappLink: v })} />
-                  <Input label="Nama Lokasi" value={settings.locationName} onChange={(v) => setSettings({ ...settings, locationName: v })} />
-                  <Input label="Alamat Lokasi" value={settings.locationAddress} onChange={(v) => setSettings({ ...settings, locationAddress: v })} />
-                  <Input label="Copyright Footer" value={settings.footerCopyright} onChange={(v) => setSettings({ ...settings, footerCopyright: v })} />
-                  <Input label="Credit Footer" value={settings.footerCredit} onChange={(v) => setSettings({ ...settings, footerCredit: v })} />
-                </div>
-              </div>
-
-              <button
-                onClick={saveSettings}
-                disabled={saving}
-                className="flex items-center gap-2 rounded-lg bg-[#DC2626] px-6 py-3 text-sm font-bold text-white hover:bg-[#B91C1C] disabled:opacity-60"
-              >
-                <Save size={16} /> {saving ? "Menyimpan..." : "SIMPAN PENGATURAN"}
-              </button>
-            </div>
+            )
           )}
 
           {tab === "lomba" && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-extrabold text-[#DC2626]">Kelola Lomba</h2>
+            lombaLoading ? (
+              <TabLoader />
+            ) : (
+              <div className="space-y-6">
+                <h2 className="text-lg font-extrabold text-[#DC2626]">Kelola Lomba</h2>
 
-              {lombaGroups.map((group) => (
+                {lombaGroups.map((group) => (
                 <div key={group._id} className="rounded-xl border border-gray-200 p-4">
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <div className="grid flex-1 gap-3 md:grid-cols-2">
@@ -563,9 +624,13 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </div>
+            )
           )}
 
           {tab === "galeri" && (
+            galleryLoading ? (
+              <TabLoader />
+            ) : (
             <div className="space-y-6">
               <h2 className="text-lg font-extrabold text-[#DC2626]">Kelola Galeri</h2>
 
@@ -645,9 +710,13 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </div>
+            )
           )}
 
           {tab === "peserta" && (
+            participantsLoading ? (
+              <TabLoader />
+            ) : (
             <div className="space-y-4">
               <h2 className="text-lg font-extrabold text-[#DC2626]">
                 Kelola Peserta ({filteredParticipants.length}
@@ -709,6 +778,7 @@ export default function AdminDashboard() {
                       <th className="px-4 py-3 font-bold text-gray-700">Nama</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Usia</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Telepon</th>
+                      <th className="px-4 py-3 font-bold text-gray-700">Alamat</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Lomba</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Status</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Aksi</th>
@@ -720,6 +790,7 @@ export default function AdminDashboard() {
                         <td className="px-4 py-3 font-medium">{p.name}</td>
                         <td className="px-4 py-3">{p.age}</td>
                         <td className="px-4 py-3">{p.phone}</td>
+                        <td className="px-4 py-3">{p.address || "-"}</td>
                         <td className="px-4 py-3">{p.category}</td>
                         <td className="px-4 py-3">
                           <select
@@ -744,6 +815,7 @@ export default function AdminDashboard() {
               </div>
               )}
             </div>
+            )
           )}
         </div>
       </div>

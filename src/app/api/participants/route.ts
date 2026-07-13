@@ -29,9 +29,9 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, age, phone, category } = body;
+    const { name, age, phone, address, category } = body;
 
-    if (!name?.trim() || !age || !phone?.trim() || !category?.trim()) {
+    if (!name?.trim() || !age || !phone?.trim() || !address?.trim() || !category?.trim()) {
       return NextResponse.json(
         { error: "Semua field wajib diisi" },
         { status: 400 }
@@ -71,6 +71,7 @@ export async function POST(request: Request) {
       name: trimmedName,
       age: ageNum,
       phone: phone.trim(),
+      address: address.trim(),
       category: category.trim(),
       status: "terdaftar",
     });

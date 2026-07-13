@@ -85,6 +85,7 @@ export default function PesertaList({ participants }: PesertaListProps) {
                   <th className="px-6 py-4 font-bold text-gray-700">Nama</th>
                   <th className="px-6 py-4 font-bold text-gray-700">Usia</th>
                   <th className="px-6 py-4 font-bold text-gray-700">Telepon</th>
+                  <th className="px-6 py-4 font-bold text-gray-700">Alamat</th>
                   <th className="px-6 py-4 font-bold text-gray-700">Lomba</th>
                   <th className="px-6 py-4 font-bold text-gray-700">Status</th>
                 </tr>
@@ -98,6 +99,7 @@ export default function PesertaList({ participants }: PesertaListProps) {
                     <td className="px-6 py-4 font-mono text-gray-600">
                       {p.phone ? maskPhone(p.phone) : "-"}
                     </td>
+                    <td className="px-6 py-4 text-gray-600">{p.address || "-"}</td>
                     <td className="px-6 py-4 text-gray-600">{p.category}</td>
                     <td className="px-6 py-4">
                       <span

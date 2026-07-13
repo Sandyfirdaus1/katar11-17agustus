@@ -4,18 +4,18 @@ import { assertSeedAllowed } from "@/lib/seed-auth";
 import { Participant } from "@/models/Participant";
 
 const seedData = [
-  { name: "Budi Santoso", age: 25, phone: "081234567801", category: "Balap Karung", status: "terdaftar" },
-  { name: "Siti Aminah", age: 22, phone: "081234567802", category: "Balap Karung", status: "terdaftar" },
-  { name: "Ahmad Rizki", age: 28, phone: "081234567803", category: "Tarik Tambang", status: "lolos" },
-  { name: "Dewi Lestari", age: 24, phone: "081234567804", category: "Tarik Tambang", status: "lolos" },
-  { name: "Rudi Hartono", age: 30, phone: "081234567805", category: "Panjat Pinang", status: "juara1" },
-  { name: "Maya Sari", age: 19, phone: "081234567806", category: "Balap Karung", status: "juara2" },
-  { name: "Joko Widodo", age: 35, phone: "081234567807", category: "Tarik Tambang", status: "juara3" },
-  { name: "Ani Yudhoyono", age: 27, phone: "081234567808", category: "Balap Karung", status: "didiskualifikasi" },
-  { name: "Eko Prasetyo", age: 21, phone: "081234567809", category: "Panjat Pinang", status: "terdaftar" },
-  { name: "Rina Wulandari", age: 23, phone: "081234567810", category: "Tarik Tambang", status: "terdaftar" },
-  { name: "Hendra Gunawan", age: 26, phone: "081234567811", category: "Balap Karung", status: "lolos" },
-  { name: "Fitri Handayani", age: 20, phone: "081234567812", category: "Panjat Pinang", status: "terdaftar" },
+  { name: "Andi Pratama", age: 5, phone: "081234567801", address: "Jl. Walang Sari Raya No. 1", category: "Paku Dalam Botol", status: "terdaftar" },
+  { name: "Sari Dewi", age: 7, phone: "081234567802", address: "Jl. Walang Sari Raya No. 5", category: "Makan Kerupuk", status: "terdaftar" },
+  { name: "Budi Setiawan", age: 6, phone: "081234567803", address: "Jl. Walang Sari Raya No. 10", category: "Balap Kelereng", status: "lolos" },
+  { name: "Rina Kartika", age: 15, phone: "081234567804", address: "Jl. Walang Sari Raya No. 3", category: "Balap Karung", status: "terdaftar" },
+  { name: "Dani Firmansyah", age: 17, phone: "081234567805", address: "Jl. Walang Sari Raya No. 8", category: "Pukul Kendi", status: "lolos" },
+  { name: "Maya Anggraini", age: 14, phone: "081234567806", address: "Jl. Walang Sari Raya No. 12", category: "Joget Jeruk", status: "juara1" },
+  { name: "Ibu Siti Aminah", age: 32, phone: "081234567807", address: "Jl. Walang Sari Raya No. 7", category: "Bakiak", status: "terdaftar" },
+  { name: "Ibu Dewi Lestari", age: 35, phone: "081234567808", address: "Jl. Walang Sari Raya No. 15", category: "Joget Jeruk", status: "juara2" },
+  { name: "Ibu Fitri Handayani", age: 28, phone: "081234567809", address: "Jl. Walang Sari Raya No. 20", category: "Rebutan Tempat Duduk", status: "terdaftar" },
+  { name: "Rizky Aditya", age: 12, phone: "081234567810", address: "Jl. Walang Sari Raya No. 2", category: "Bakiak", status: "juara3" },
+  { name: "Putri Rahayu", age: 4, phone: "081234567811", address: "Jl. Walang Sari Raya No. 9", category: "Bola Keranjang", status: "terdaftar" },
+  { name: "Ibu Ani Suryani", age: 30, phone: "081234567812", address: "Jl. Walang Sari Raya No. 11", category: "Kerucut", status: "lolos" },
 ];
 
 export async function POST(request: Request) {
