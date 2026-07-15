@@ -28,13 +28,15 @@ export function getLombaForAge(groups: LombaGroupLike[], age: number): string[] 
     const range = parseAgeRange(group.age);
     if (range) {
       const isDirectMatch = age >= range.min && age <= range.max;
-      // Special rule: Dewasa (21-40) can also register for Remaja (10-20)
-      const isDewasaRegisteringRemaja =
-        age >= 21 &&
-        age <= 40 &&
-        group.age === "10-20";
+      
+      // Allow cross-registration between Remaja and Dewasa categories
+      // Remaja (10-20) can register for Dewasa (18+)
+      // Dewasa (18+) can register for Remaja (10-20)
+      const isCrossRegistration = 
+        (age >= 10 && age <= 20 && range.min >= 18) || // Remaja registering for Dewasa
+        (age >= 18 && range.min >= 10 && range.max <= 20); // Dewasa registering for Remaja
 
-      if (isDirectMatch || isDewasaRegisteringRemaja) {
+      if (isDirectMatch || isCrossRegistration) {
         matches.push(...group.lomba);
       }
     }

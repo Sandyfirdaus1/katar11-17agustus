@@ -47,6 +47,7 @@ interface LombaItem {
   group: string;
   age: string;
   lomba: string[];
+  lombaRaw?: string;
   order: number;
 }
 
@@ -238,7 +239,11 @@ export default function AdminDashboard() {
     fetch("/api/admin/lomba")
       .then((r) => r.json())
       .then((data) => {
-        setLombaGroups(Array.isArray(data) ? data : []);
+        const dataWithRaw = Array.isArray(data) ? data.map((item: LombaItem) => ({
+          ...item,
+          lombaRaw: item.lomba.join(", ")
+        })) : [];
+        setLombaGroups(dataWithRaw);
         setLombaLoading(false);
       })
       .catch(() => setLombaLoading(false));
@@ -579,12 +584,12 @@ export default function AdminDashboard() {
                   </div>
                   <label className="mb-1 block text-xs font-semibold text-gray-600">Daftar lomba</label>
                   <textarea
-                    value={group.lomba.join(", ")}
+                    value={group.lombaRaw || group.lomba.join(", ")}
                     onChange={(e) =>
                       setLombaGroups((prev) =>
                         prev.map((g) =>
                           g._id === group._id
-                            ? { ...g, lomba: e.target.value.split(",").map((s) => s.trim()) }
+                            ? { ...g, lombaRaw: e.target.value }
                             : g
                         )
                       )
@@ -599,10 +604,11 @@ export default function AdminDashboard() {
                         showMsg("Nama kategori dan rentang usia wajib diisi");
                         return;
                       }
+                      const lombaArray = (group.lombaRaw || group.lomba.join(", ")).split(",").map((s) => s.trim()).filter(Boolean);
                       updateLombaGroup(group._id, {
                         group: group.group.trim(),
                         age: group.age.trim(),
-                        lomba: group.lomba.filter(Boolean),
+                        lomba: lombaArray,
                       });
                     }}
                     className="mt-2 text-xs font-semibold text-[#DC2626] hover:underline"
