@@ -20,8 +20,12 @@ export type PublicParticipant = {
   age?: number;
   phone?: string;
   address?: string;
-  category: string;
-  status: string;
+  categories?: string[];
+  category?: string;
+  teamName?: string;
+  teamMembers?: string[];
+  status?: string;
+  lombaStatuses?: { [key: string]: string };
 };
 
 const emptyStats: ParticipantStats = {
@@ -111,16 +115,24 @@ async function fetchGalleryImages() {
 async function fetchParticipantStats(): Promise<ParticipantStats> {
   try {
     await connectDB();
-    const results = await Participant.aggregate<{ _id: string; count: number }>([
-      { $group: { _id: "$status", count: { $sum: 1 } } },
-    ]);
-
+    const participants = await Participant.find().lean();
+    
     const counts = { ...emptyStats };
-    for (const row of results) {
-      if (row._id in counts) {
-        counts[row._id as keyof ParticipantStats] = row.count;
+    
+    for (const participant of participants) {
+      const lombaStatuses = participant.lombaStatuses as Record<string, string> | undefined;
+      
+      if (lombaStatuses && Object.keys(lombaStatuses).length > 0) {
+        for (const status of Object.values(lombaStatuses)) {
+          if (status in counts) {
+            counts[status as keyof ParticipantStats]++;
+          }
+        }
+      } else if (participant.status && participant.status in counts) {
+        counts[participant.status as keyof ParticipantStats]++;
       }
     }
+    
     return counts;
   } catch {
     return emptyStats;
@@ -132,7 +144,7 @@ async function fetchParticipants(): Promise<PublicParticipant[]> {
     await connectDB();
     const participants = await Participant.find()
       .sort({ createdAt: -1 })
-      .select("name age phone address category status")
+      .select("name age phone address categories category teamName teamMembers status lombaStatuses")
       .lean();
     return JSON.parse(JSON.stringify(participants));
   } catch {

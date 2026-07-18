@@ -23,12 +23,33 @@ export default function PesertaList({ participants }: PesertaListProps) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [lombaFilter, setLombaFilter] = useState("all");
 
-  const lombaOptions = [...new Set(participants.map((p) => p.category))].sort();
+  console.log("Participants data:", participants);
+
+  const lombaOptions = Array.from(
+    new Set(
+      participants.flatMap((p) => {
+        const cats = p.categories || [];
+        const legacyCat = p.category;
+        if (legacyCat && !cats.includes(legacyCat)) {
+          return [...cats, legacyCat];
+        }
+        return cats;
+      })
+    )
+  ).sort();
 
   const filtered = participants.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || p.status === statusFilter;
-    const matchLomba = lombaFilter === "all" || p.category === lombaFilter;
+    const matchStatus = statusFilter === "all" || 
+      (lombaFilter === "all" 
+        ? (p.lombaStatuses && Object.keys(p.lombaStatuses).length > 0 
+          ? Object.values(p.lombaStatuses).some((status) => status === statusFilter)
+          : p.status === statusFilter)
+        : (p.lombaStatuses?.[lombaFilter] || p.status) === statusFilter);
+    const matchLomba =
+      lombaFilter === "all" ||
+      (p.categories && p.categories.includes(lombaFilter)) ||
+      p.category === lombaFilter;
     return matchSearch && matchStatus && matchLomba;
   });
 
@@ -100,13 +121,46 @@ export default function PesertaList({ participants }: PesertaListProps) {
                       {p.phone ? maskPhone(p.phone) : "-"}
                     </td>
                     <td className="px-6 py-4 text-gray-600">{p.address || "-"}</td>
-                    <td className="px-6 py-4 text-gray-600">{p.category}</td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {lombaFilter === "all" 
+                        ? (p.categories && p.categories.length > 0 
+                          ? p.categories.join(", ") 
+                          : p.category || "-")
+                        : (p.categories && p.categories.includes(lombaFilter) 
+                          ? lombaFilter 
+                          : (p.category === lombaFilter ? lombaFilter : "-"))
+                      }
+                    </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${statusLabels[p.status]?.color || "bg-gray-100 text-gray-700"}`}
-                      >
-                        {statusLabels[p.status]?.label || p.status}
-                      </span>
+                      {lombaFilter === "all" ? (
+                        <div className="space-y-1">
+                          {(p.categories || [p.category])
+                            .filter((cat): cat is string => Boolean(cat))
+                            .filter((cat) => 
+                              statusFilter === "all" || 
+                              (p.lombaStatuses?.[cat] || p.status || "terdaftar") === statusFilter
+                            )
+                            .map((cat: string) => {
+                            const lombaStatus = p.lombaStatuses?.[cat] || p.status || "terdaftar";
+                            return (
+                              <div key={cat} className="flex items-center gap-2">
+                                <span className="text-xs text-gray-600 w-24 truncate">{cat}:</span>
+                                <span
+                                  className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${statusLabels[lombaStatus]?.color || "bg-gray-100 text-gray-700"}`}
+                                >
+                                  {statusLabels[lombaStatus]?.label || lombaStatus}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span
+                          className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${statusLabels[p.lombaStatuses?.[lombaFilter] || p.status || "terdaftar"]?.color || "bg-gray-100 text-gray-700"}`}
+                        >
+                          {statusLabels[p.lombaStatuses?.[lombaFilter] || p.status || "terdaftar"]?.label || p.lombaStatuses?.[lombaFilter] || p.status || "terdaftar"}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

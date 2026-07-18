@@ -8,6 +8,8 @@ import { getLombaForAge } from "@/lib/lomba-age";
 interface LombaGroupItem {
   age: string;
   lomba: string[];
+  isTeam?: boolean;
+  teamSize?: 2 | 3 | 4;
 }
 
 interface DaftarFormProps {
@@ -20,7 +22,9 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
   const [age, setAge] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [teamName, setTeamName] = useState("");
+  const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -33,18 +37,60 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
   );
 
   useEffect(() => {
-    if (category && !availableLomba.includes(category)) {
-      setCategory("");
+    setCategories((prev) => prev.filter((cat) => availableLomba.includes(cat)));
+  }, [availableLomba]);
+
+  useEffect(() => {
+    const hasTeamLomba = categories.some(cat => {
+      const group = lombaGroups.find(g => g.lomba.includes(cat));
+      return group?.isTeam;
+    });
+    
+    if (hasTeamLomba) {
+      const teamLomba = categories.find(cat => {
+        const group = lombaGroups.find(g => g.lomba.includes(cat));
+        return group?.isTeam;
+      });
+      if (teamLomba) {
+        const group = lombaGroups.find(g => g.lomba.includes(teamLomba));
+        const requiredSize = group?.teamSize || 2;
+        
+        if (teamMembers.length !== requiredSize) {
+          setTeamMembers(Array(requiredSize).fill(""));
+        }
+      }
+    } else {
+      setTeamMembers([]);
     }
-  }, [availableLomba, category]);
+  }, [categories, lombaGroups]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    if (!name.trim() || !age || !phone.trim() || !address.trim() || !category) {
-      setError("Semua field wajib diisi.");
+    if (!name.trim()) {
+      setError("Nama wajib diisi.");
+      setLoading(false);
+      return;
+    }
+    if (!age) {
+      setError("Usia wajib diisi.");
+      setLoading(false);
+      return;
+    }
+    if (!phone.trim()) {
+      setError("Nomor telepon wajib diisi.");
+      setLoading(false);
+      return;
+    }
+    if (!address.trim()) {
+      setError("Alamat wajib diisi.");
+      setLoading(false);
+      return;
+    }
+    if (categories.length === 0) {
+      setError("Pilih minimal satu lomba.");
       setLoading(false);
       return;
     }
@@ -56,17 +102,56 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
       return;
     }
 
-    if (!availableLomba.includes(category)) {
-      setError("Pilihan lomba tidak sesuai dengan usia Anda.");
+    // Check if any selected category is not valid for age
+    const invalidCategory = categories.find(cat => !availableLomba.includes(cat));
+    if (invalidCategory) {
+      setError(`Pilihan lomba "${invalidCategory}" tidak sesuai dengan usia Anda.`);
       setLoading(false);
       return;
+    }
+
+    // Check if team name is required for team competitions
+    const hasTeamLomba = categories.some(cat => {
+      const group = lombaGroups.find(g => g.lomba.includes(cat));
+      return group?.isTeam;
+    });
+    if (hasTeamLomba && !teamName.trim()) {
+      setError("Nama tim wajib diisi untuk lomba tim.");
+      setLoading(false);
+      return;
+    }
+
+    // Check if team member names are filled for team competitions
+    if (hasTeamLomba) {
+      const emptyMembers = teamMembers.filter(m => !m.trim());
+      if (emptyMembers.length > 0) {
+        setError(`Semua nama anggota tim wajib diisi (${teamMembers.length} orang).`);
+        setLoading(false);
+        return;
+      }
+
+      // Check for duplicate names in team members
+      const trimmedMembers = teamMembers.map(m => m.trim().toLowerCase());
+      const uniqueMembers = new Set(trimmedMembers);
+      if (uniqueMembers.size !== trimmedMembers.length) {
+        setError("Nama anggota tim tidak boleh ada yang sama.");
+        setLoading(false);
+        return;
+      }
+
+      // Check if team member name is same as main registrant name
+      if (trimmedMembers.includes(name.trim().toLowerCase())) {
+        setError("Nama anggota tim tidak boleh sama dengan nama pendaftar.");
+        setLoading(false);
+        return;
+      }
     }
 
     try {
       const res = await fetch("/api/participants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, age: ageNum, phone, address, category, status: "terdaftar" }),
+        body: JSON.stringify({ name, age: ageNum, phone, address, categories, teamName, teamMembers }),
       });
 
       const data = await res.json();
@@ -81,7 +166,9 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
       setAge("");
       setPhone("");
       setAddress("");
-      setCategory("");
+      setCategories([]);
+      setTeamName("");
+      setTeamMembers([]);
     } catch {
       setError("Gagal mendaftar. Silakan coba lagi.");
     } finally {
@@ -128,11 +215,16 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
     <>
       <div className="mb-6 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
         <AlertCircle size={20} className="mt-0.5 shrink-0 text-amber-600" />
-        <p className="text-sm text-amber-800">
-          <span className="font-bold">Perhatian:</span> Nama yang sama tidak diperbolehkan
-          mendaftar lebih dari satu kali. Pastikan data yang Anda isi sudah benar sebelum
-          mengirim formulir.
-        </p>
+        <div className="text-sm text-amber-800">
+          <p className="font-bold">Perhatian:</p>
+          <ul className="mt-1 list-disc list-inside space-y-1">
+            <li>Nama yang sama tidak diperbolehkan mendaftar lebih dari satu kali</li>
+            <li>Lomba tim (Estafet Air) wajib 4 orang anggota tim</li>
+            <li>Lomba tim kecil (Balap Bakiak) wajib 3 orang anggota tim</li>
+            <li>Lomba tim pasangan (Joget Jeruk) wajib 2 orang anggota tim</li>
+            <li>Pastikan data yang Anda isi sudah benar sebelum mengirim formulir</li>
+          </ul>
+        </div>
       </div>
 
       <form
@@ -203,36 +295,105 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
         </div>
 
         <div className="mb-6">
-          <label htmlFor="category" className="mb-1 block text-sm font-semibold text-gray-700">
-            Pilihan Lomba
+          <label className="mb-2 block text-sm font-semibold text-gray-700">
+            Pilihan Lomba (bisa pilih lebih dari satu)
           </label>
-          <select
-            id="category"
-            required
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            disabled={!isValidAge || availableLomba.length === 0}
-            className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626] disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
-          >
-            <option value="">
-              {!isValidAge
-                ? "Isi usia terlebih dahulu"
-                : availableLomba.length === 0
-                  ? "Tidak ada lomba untuk usia ini"
-                  : "Pilih lomba"}
-            </option>
-            {availableLomba.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+          {!isValidAge ? (
+            <p className="text-sm text-gray-500">Isi usia terlebih dahulu</p>
+          ) : availableLomba.length === 0 ? (
+            <p className="text-sm text-gray-500">Tidak ada lomba untuk usia ini</p>
+          ) : (
+            <div className="space-y-2">
+              {availableLomba.map((lomba) => {
+                const group = lombaGroups.find(g => g.lomba.includes(lomba));
+                const isTeam = group?.isTeam;
+                const teamSize = group?.teamSize;
+                return (
+                  <label key={lomba} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      value={lomba}
+                      checked={categories.includes(lomba)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setCategories([...categories, lomba]);
+                        } else {
+                          setCategories(categories.filter(c => c !== lomba));
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-[#DC2626] focus:ring-[#DC2626]"
+                    />
+                    <span className="text-sm text-gray-700">
+                      {lomba}
+                      {isTeam && teamSize && (
+                        <span className="ml-2 text-xs text-blue-600 font-medium">(Tim {teamSize} Orang)</span>
+                      )}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
           {isValidAge && availableLomba.length > 0 && (
             <p className="mt-1 text-xs text-gray-500">
               Menampilkan {availableLomba.length} lomba sesuai usia {ageNum} tahun
             </p>
           )}
+          <p className="mt-1 text-xs text-gray-500">
+            Terpilih: {categories.length} lomba
+          </p>
         </div>
+
+        {categories.length > 0 && categories.some(cat => {
+          const group = lombaGroups.find(g => g.lomba.includes(cat));
+          return group?.isTeam;
+        }) && (
+          <>
+            <div className="mb-6">
+              <label htmlFor="teamName" className="mb-1 block text-sm font-semibold text-gray-700">
+                Nama Tim <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="teamName"
+                type="text"
+                required
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder="Masukkan nama tim"
+                className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Wajib diisi untuk lomba tim
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Nama Anggota Tim <span className="text-red-500">*</span>
+              </label>
+              <div className="space-y-2">
+                {teamMembers.map((member, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    required
+                    value={member}
+                    onChange={(e) => {
+                      const newMembers = [...teamMembers];
+                      newMembers[index] = e.target.value;
+                      setTeamMembers(newMembers);
+                    }}
+                    placeholder={`Nama anggota ${index + 1}`}
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
+                  />
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Wajib diisi {teamMembers.length} orang untuk lomba tim
+              </p>
+            </div>
+          </>
+        )}
 
         {error && <p className="mb-4 text-center text-sm text-red-600">{error}</p>}
 

@@ -1,6 +1,7 @@
 export interface LombaGroupLike {
   age: string;
   lomba: string[];
+  isTeam?: boolean;
 }
 
 export function parseAgeRange(ageLabel: string): { min: number; max: number } | null {
@@ -25,6 +26,12 @@ export function parseAgeRange(ageLabel: string): { min: number; max: number } | 
 export function getLombaForAge(groups: LombaGroupLike[], age: number): string[] {
   const matches: string[] = [];
   for (const group of groups) {
+    // Team competitions are available for all ages
+    if (group.isTeam) {
+      matches.push(...group.lomba);
+      continue;
+    }
+
     const range = parseAgeRange(group.age);
     if (range) {
       const isDirectMatch = age >= range.min && age <= range.max;

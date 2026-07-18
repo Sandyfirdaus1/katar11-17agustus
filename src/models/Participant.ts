@@ -13,8 +13,12 @@ export interface IParticipant {
   age: number;
   phone: string;
   address: string;
-  category: string;
-  status: ParticipantStatus;
+  categories?: string[];
+  category?: string;
+  teamName?: string;
+  teamMembers?: string[];
+  lombaStatuses?: Map<string, ParticipantStatus>;
+  status?: ParticipantStatus;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -25,7 +29,21 @@ const ParticipantSchema = new Schema<IParticipant>(
     age: { type: Number, required: true, min: 1, max: 120 },
     phone: { type: String, required: true, trim: true },
     address: { type: String, required: true, trim: true },
-    category: { type: String, required: true },
+    // New fields for multiple categories
+    categories: { type: [String], required: false },
+    // Legacy field for backward compatibility
+    category: { type: String },
+    teamName: { type: String, trim: true },
+    teamMembers: { type: [String], required: false },
+    lombaStatuses: {
+      type: Map,
+      of: {
+        type: String,
+        enum: ["terdaftar", "lolos", "juara1", "juara2", "juara3", "didiskualifikasi"],
+      },
+      default: {},
+    },
+    // Legacy field for backward compatibility
     status: {
       type: String,
       enum: ["terdaftar", "lolos", "juara1", "juara2", "juara3", "didiskualifikasi"],

@@ -2,6 +2,8 @@ export interface LombaGroup {
   group: string;
   age: string;
   lomba: string[];
+  isTeam?: boolean;
+  teamSize?: 2 | 3 | 4;
 }
 
 export const lombaGroups: LombaGroup[] = [
@@ -32,8 +34,7 @@ export const lombaGroups: LombaGroup[] = [
       "Balap Karung",
       "Tarik Tambang",
       "Balap Bakiak",
-      "Futsal",
-      "Voli",
+      "Joget Jeruk",
     ],
   },
   {
@@ -45,7 +46,37 @@ export const lombaGroups: LombaGroup[] = [
       "Balap Karung",
       "Balap Bakiak",
       "Domino",
+      "Joget Jeruk",
     ],
+  },
+  {
+    group: "Tim",
+    age: "Semua Usia",
+    lomba: [
+      "Estafet Air",
+    ],
+    isTeam: true,
+    teamSize: 4,
+  },
+  {
+    group: "Tim Kecil",
+    age: "Semua Usia",
+    lomba: [
+      "Balap Bakiak",
+      "Bakiak",
+      "Joget Jeruk",
+    ],
+    isTeam: true,
+    teamSize: 3,
+  },
+  {
+    group: "Tim Pasangan",
+    age: "Semua Usia",
+    lomba: [
+      "Joget Jeruk",
+    ],
+    isTeam: true,
+    teamSize: 2,
   },
 ];
 

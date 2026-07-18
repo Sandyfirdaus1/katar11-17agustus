@@ -65,8 +65,12 @@ interface Participant {
   age: number;
   phone: string;
   address: string;
-  category: string;
-  status: string;
+  categories?: string[];
+  category?: string;
+  teamName?: string;
+  teamMembers?: string[];
+  status?: string;
+  lombaStatuses?: { [key: string]: string };
 }
 
 const statusOptions = [
@@ -383,23 +387,61 @@ export default function AdminDashboard() {
     showMsg("Gambar dihapus");
   }
 
-  async function updateParticipant(id: string, status: string) {
+  async function updateParticipant(id: string, lomba: string, status: string) {
+    const participant = participants.find((p) => p._id === id);
+    if (!participant) return;
+
+    const updatedLombaStatuses = {
+      ...(participant.lombaStatuses || {}),
+      [lomba]: status,
+    };
+
     await fetch(`/api/admin/participants/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ lombaStatuses: updatedLombaStatuses }),
     });
     setParticipants((prev) =>
-      prev.map((p) => (p._id === id ? { ...p, status } : p))
+      prev.map((p) => (p._id === id ? { ...p, lombaStatuses: updatedLombaStatuses } : p))
     );
-    showMsg("Status peserta diperbarui");
+    showMsg("Status lomba peserta diperbarui");
   }
 
   async function deleteParticipant(id: string) {
-    if (!confirm("Hapus peserta ini?")) return;
-    await fetch(`/api/admin/participants/${id}`, { method: "DELETE" });
-    setParticipants((prev) => prev.filter((p) => p._id !== id));
-    showMsg("Peserta dihapus");
+    const participant = participants.find((p) => p._id === id);
+    if (!participant) return;
+
+    if (participantLombaFilter === "all") {
+      if (!confirm("Hapus peserta ini?")) return;
+      await fetch(`/api/admin/participants/${id}`, { method: "DELETE" });
+      setParticipants((prev) => prev.filter((p) => p._id !== id));
+      showMsg("Peserta dihapus");
+    } else {
+      if (!confirm(`Hapus lomba "${participantLombaFilter}" dari peserta ini?`)) return;
+      
+      const updatedCategories = (participant.categories || []).filter((c) => c !== participantLombaFilter);
+      const updatedLombaStatuses = participant.lombaStatuses ? Object.fromEntries(
+        Object.entries(participant.lombaStatuses).filter(([key]) => key !== participantLombaFilter)
+      ) : {};
+
+      await fetch(`/api/admin/participants/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          categories: updatedCategories,
+          lombaStatuses: updatedLombaStatuses
+        }),
+      });
+      
+      setParticipants((prev) =>
+        prev.map((p) =>
+          p._id === id
+            ? { ...p, categories: updatedCategories, lombaStatuses: updatedLombaStatuses }
+            : p
+        )
+      );
+      showMsg(`Lomba "${participantLombaFilter}" dihapus dari peserta`);
+    }
   }
 
 
@@ -411,12 +453,19 @@ export default function AdminDashboard() {
     );
   }
 
-  const lombaOptions = [
-    ...new Set([
+  const lombaOptions = Array.from(
+    new Set([
       ...lombaGroups.flatMap((g) => g.lomba),
-      ...participants.map((p) => p.category),
-    ]),
-  ].sort();
+      ...participants.flatMap((p) => {
+        const cats = p.categories || [];
+        const legacyCat = (p as any).category;
+        if (legacyCat && !cats.includes(legacyCat)) {
+          return [...cats, legacyCat];
+        }
+        return cats;
+      }),
+    ])
+  ).sort();
 
   const filteredParticipants = participants.filter((p) => {
     const matchSearch =
@@ -424,9 +473,16 @@ export default function AdminDashboard() {
       p.phone.includes(participantSearch) ||
       (p.address && p.address.toLowerCase().includes(participantSearch.toLowerCase()));
     const matchLomba =
-      participantLombaFilter === "all" || p.category === participantLombaFilter;
+      participantLombaFilter === "all" || 
+      (p.categories && p.categories.includes(participantLombaFilter)) ||
+      ((p as any).category === participantLombaFilter);
     const matchStatus =
-      participantStatusFilter === "all" || p.status === participantStatusFilter;
+      participantStatusFilter === "all" || 
+      (participantLombaFilter === "all" 
+        ? (p.lombaStatuses && Object.keys(p.lombaStatuses).length > 0 
+          ? Object.values(p.lombaStatuses).some((status) => status === participantStatusFilter)
+          : p.status === participantStatusFilter)
+        : (p.lombaStatuses?.[participantLombaFilter] || p.status) === participantStatusFilter);
     return matchSearch && matchLomba && matchStatus;
   });
 
@@ -786,6 +842,7 @@ export default function AdminDashboard() {
                       <th className="px-4 py-3 font-bold text-gray-700">Telepon</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Alamat</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Lomba</th>
+                      <th className="px-4 py-3 font-bold text-gray-700">Tim</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Status</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Aksi</th>
                     </tr>
@@ -797,17 +854,63 @@ export default function AdminDashboard() {
                         <td className="px-4 py-3">{p.age}</td>
                         <td className="px-4 py-3">{p.phone}</td>
                         <td className="px-4 py-3">{p.address || "-"}</td>
-                        <td className="px-4 py-3">{p.category}</td>
                         <td className="px-4 py-3">
-                          <select
-                            value={p.status}
-                            onChange={(e) => updateParticipant(p._id, e.target.value)}
-                            className="rounded border border-gray-200 px-2 py-1 text-xs"
-                          >
-                            {statusOptions.map((s) => (
-                              <option key={s.value} value={s.value}>{s.label}</option>
-                            ))}
-                          </select>
+                          {participantLombaFilter === "all" 
+                            ? ((p.categories && p.categories.length > 0) 
+                              ? p.categories.join(", ") 
+                              : (p as any).category || "-")
+                            : ((p.categories && p.categories.includes(participantLombaFilter)) 
+                              ? participantLombaFilter 
+                              : ((p as any).category === participantLombaFilter ? participantLombaFilter : "-"))
+                          }
+                        </td>
+                        <td className="px-4 py-3">
+                          {p.teamName ? (
+                            <div>
+                              <div className="font-medium text-xs">{p.teamName}</div>
+                              {p.teamMembers && p.teamMembers.length > 0 && (
+                                <div className="text-xs text-gray-500">
+                                  {p.teamMembers.join(", ")}
+                                </div>
+                              )}
+                            </div>
+                          ) : "-"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {participantLombaFilter === "all" ? (
+                            <div className="space-y-1">
+                              {(p.categories || [(p as any).category])
+                                .filter((cat): cat is string => Boolean(cat))
+                                .filter((cat) => 
+                                  participantStatusFilter === "all" || 
+                                  (p.lombaStatuses?.[cat] || "terdaftar") === participantStatusFilter
+                                )
+                                .map((cat: string) => (
+                                <div key={cat} className="flex items-center gap-1">
+                                  <span className="text-xs text-gray-600 w-24 truncate">{cat}:</span>
+                                  <select
+                                    value={(p.lombaStatuses?.[cat]) || "terdaftar"}
+                                    onChange={(e) => updateParticipant(p._id, cat, e.target.value)}
+                                    className="rounded border border-gray-200 px-2 py-0.5 text-xs"
+                                  >
+                                    {statusOptions.map((s) => (
+                                      <option key={s.value} value={s.value}>{s.label}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <select
+                              value={(p.lombaStatuses?.[participantLombaFilter]) || "terdaftar"}
+                              onChange={(e) => updateParticipant(p._id, participantLombaFilter, e.target.value)}
+                              className="rounded border border-gray-200 px-2 py-1 text-xs"
+                            >
+                              {statusOptions.map((s) => (
+                                <option key={s.value} value={s.value}>{s.label}</option>
+                              ))}
+                            </select>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <button onClick={() => deleteParticipant(p._id)} className="text-red-500 hover:text-red-700">
