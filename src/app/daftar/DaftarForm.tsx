@@ -23,7 +23,6 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
-  const [teamName, setTeamName] = useState("");
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -45,7 +44,7 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
       const group = lombaGroups.find(g => g.lomba.includes(cat));
       return group?.isTeam;
     });
-    
+
     if (hasTeamLomba) {
       const teamLomba = categories.find(cat => {
         const group = lombaGroups.find(g => g.lomba.includes(cat));
@@ -54,9 +53,11 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
       if (teamLomba) {
         const group = lombaGroups.find(g => g.lomba.includes(teamLomba));
         const requiredSize = group?.teamSize || 2;
-        
-        if (teamMembers.length !== requiredSize) {
-          setTeamMembers(Array(requiredSize).fill(""));
+        // Jumlah input = requiredSize - 1 (karena pendaftar utama + anggota tim)
+        const inputCount = requiredSize - 1;
+
+        if (teamMembers.length !== inputCount) {
+          setTeamMembers(Array(inputCount).fill(""));
         }
       }
     } else {
@@ -110,22 +111,17 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
       return;
     }
 
-    // Check if team name is required for team competitions
+    // Check if any selected category is a team competition
     const hasTeamLomba = categories.some(cat => {
       const group = lombaGroups.find(g => g.lomba.includes(cat));
       return group?.isTeam;
     });
-    if (hasTeamLomba && !teamName.trim()) {
-      setError("Nama tim wajib diisi untuk lomba tim.");
-      setLoading(false);
-      return;
-    }
 
     // Check if team member names are filled for team competitions
     if (hasTeamLomba) {
       const emptyMembers = teamMembers.filter(m => !m.trim());
       if (emptyMembers.length > 0) {
-        setError(`Semua nama anggota tim wajib diisi (${teamMembers.length} orang).`);
+        setError(`Semua nama anggota tim wajib diisi.`);
         setLoading(false);
         return;
       }
@@ -151,7 +147,7 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
       const res = await fetch("/api/participants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, age: ageNum, phone, address, categories, teamName, teamMembers }),
+        body: JSON.stringify({ name, age: ageNum, phone, address, categories, teamMembers }),
       });
 
       const data = await res.json();
@@ -167,7 +163,6 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
       setPhone("");
       setAddress("");
       setCategories([]);
-      setTeamName("");
       setTeamMembers([]);
     } catch {
       setError("Gagal mendaftar. Silakan coba lagi.");
@@ -219,9 +214,10 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
           <p className="font-bold">Perhatian:</p>
           <ul className="mt-1 list-disc list-inside space-y-1">
             <li>Nama yang sama tidak diperbolehkan mendaftar lebih dari satu kali</li>
-            <li>Lomba tim (Estafet Air) wajib 4 orang anggota tim</li>
-            <li>Lomba tim kecil (Balap Bakiak) wajib 3 orang anggota tim</li>
-            <li>Lomba tim pasangan (Joget Jeruk) wajib 2 orang anggota tim</li>
+            <li>Lomba tim (Estafet Air) total 4 orang (Anda + 3 anggota tim)</li>
+            <li>Lomba tim kecil (Balap Bakiak) total 3 orang (Anda + 2 anggota tim)</li>
+            <li>Lomba tim pasangan (Joget Jeruk) total 2 orang (Anda + 1 anggota tim)</li>
+            <li>Untuk lomba tim, gunakan kata "dan" antar nama anggota tim (contoh: Budi dan Andi dan Citra)</li>
             <li>Pastikan data yang Anda isi sudah benar sebelum mengirim formulir</li>
           </ul>
         </div>
@@ -233,7 +229,7 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
       >
         <div className="mb-4">
           <label htmlFor="name" className="mb-1 block text-sm font-semibold text-gray-700">
-            Nama Lengkap
+            Nama
           </label>
           <input
             id="name"
@@ -241,7 +237,7 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Masukkan nama lengkap"
+            placeholder="Masukkan nama"
             className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
           />
         </div>
@@ -350,26 +346,8 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
         }) && (
           <>
             <div className="mb-6">
-              <label htmlFor="teamName" className="mb-1 block text-sm font-semibold text-gray-700">
-                Nama Tim <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="teamName"
-                type="text"
-                required
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                placeholder="Masukkan nama tim"
-                className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Wajib diisi untuk lomba tim
-              </p>
-            </div>
-
-            <div className="mb-6">
               <label className="mb-2 block text-sm font-semibold text-gray-700">
-                Nama Anggota Tim <span className="text-red-500">*</span>
+                Nama Anggota Tim Lainnya <span className="text-red-500">*</span>
               </label>
               <div className="space-y-2">
                 {teamMembers.map((member, index) => (
@@ -383,13 +361,13 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
                       newMembers[index] = e.target.value;
                       setTeamMembers(newMembers);
                     }}
-                    placeholder={`Nama anggota ${index + 1}`}
+                    placeholder={`Nama anggota tim ${index + 1}`}
                     className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
                   />
                 ))}
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Wajib diisi {teamMembers.length} orang untuk lomba tim
+                {teamMembers.length} orang anggota tim lainnya (selain Anda)
               </p>
             </div>
           </>

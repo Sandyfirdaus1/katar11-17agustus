@@ -22,7 +22,6 @@ export type PublicParticipant = {
   address?: string;
   categories?: string[];
   category?: string;
-  teamName?: string;
   teamMembers?: string[];
   status?: string;
   lombaStatuses?: { [key: string]: string };
@@ -144,7 +143,7 @@ async function fetchParticipants(): Promise<PublicParticipant[]> {
     await connectDB();
     const participants = await Participant.find()
       .sort({ createdAt: -1 })
-      .select("name age phone address categories category teamName teamMembers status lombaStatuses")
+      .select("name age phone address categories category teamMembers status lombaStatuses")
       .lean();
     return JSON.parse(JSON.stringify(participants));
   } catch {

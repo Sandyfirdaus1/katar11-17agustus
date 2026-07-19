@@ -15,7 +15,6 @@ export interface IParticipant {
   address: string;
   categories?: string[];
   category?: string;
-  teamName?: string;
   teamMembers?: string[];
   lombaStatuses?: Map<string, ParticipantStatus>;
   status?: ParticipantStatus;
@@ -33,7 +32,6 @@ const ParticipantSchema = new Schema<IParticipant>(
     categories: { type: [String], required: false },
     // Legacy field for backward compatibility
     category: { type: String },
-    teamName: { type: String, trim: true },
     teamMembers: { type: [String], required: false },
     lombaStatuses: {
       type: Map,

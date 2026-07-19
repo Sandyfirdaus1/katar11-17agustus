@@ -67,8 +67,6 @@ interface Participant {
   address: string;
   categories?: string[];
   category?: string;
-  teamName?: string;
-  teamMembers?: string[];
   status?: string;
   lombaStatuses?: { [key: string]: string };
 }
@@ -842,7 +840,6 @@ export default function AdminDashboard() {
                       <th className="px-4 py-3 font-bold text-gray-700">Telepon</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Alamat</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Lomba</th>
-                      <th className="px-4 py-3 font-bold text-gray-700">Tim</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Status</th>
                       <th className="px-4 py-3 font-bold text-gray-700">Aksi</th>
                     </tr>
@@ -863,18 +860,6 @@ export default function AdminDashboard() {
                               ? participantLombaFilter 
                               : ((p as any).category === participantLombaFilter ? participantLombaFilter : "-"))
                           }
-                        </td>
-                        <td className="px-4 py-3">
-                          {p.teamName ? (
-                            <div>
-                              <div className="font-medium text-xs">{p.teamName}</div>
-                              {p.teamMembers && p.teamMembers.length > 0 && (
-                                <div className="text-xs text-gray-500">
-                                  {p.teamMembers.join(", ")}
-                                </div>
-                              )}
-                            </div>
-                          ) : "-"}
                         </td>
                         <td className="px-4 py-3">
                           {participantLombaFilter === "all" ? (

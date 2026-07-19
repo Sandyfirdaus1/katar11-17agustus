@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, age, phone, address, categories, teamName, teamMembers } = body;
+    const { name, age, phone, address, categories, teamMembers } = body;
 
     if (!name?.trim() || !age || !phone?.trim() || !address?.trim() || !categories || !Array.isArray(categories) || categories.length === 0) {
       return NextResponse.json(
@@ -85,7 +85,6 @@ export async function POST(request: Request) {
       address: address.trim(),
       categories: trimmedCategories,
       category: trimmedCategories[0], // Legacy field for backward compatibility
-      teamName: teamName?.trim() || undefined,
       teamMembers: teamMembers && Array.isArray(teamMembers) ? teamMembers.map((m: string) => m.trim()).filter(Boolean) : undefined,
       lombaStatuses,
       status: "terdaftar", // Legacy field
