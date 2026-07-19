@@ -40,6 +40,7 @@ interface SiteSettings {
   locationAddress: string;
   footerCopyright: string;
   footerCredit: string;
+  attentionNote: string;
 }
 
 interface LombaItem {
@@ -108,6 +109,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   locationAddress: "Jl Walang Sari Raya",
   footerCopyright: "© 2026 Katar 11. Dirgahayu Republik Indonesia.",
   footerCredit: "Dibuat Oleh Shandy",
+  attentionNote: "Nama yang sama tidak diperbolehkan mendaftar lebih dari satu kali\nLomba tim (Estafet Air) total 4 orang (Anda + 3 anggota tim)\nLomba tim kecil (Balap Bakiak) total 3 orang (Anda + 2 anggota tim)\nLomba tim pasangan (Joget Jeruk) total 2 orang (Anda + 1 anggota tim)\nUntuk lomba tim, gunakan kata \"dan\" antar nama anggota tim (contoh: Budi dan Andi dan Citra)\nPastikan data yang Anda isi sudah benar sebelum mengirim formulir",
 };
 
 function normalizeSettings(data: Partial<SiteSettings>): SiteSettings {
@@ -131,6 +133,7 @@ function normalizeSettings(data: Partial<SiteSettings>): SiteSettings {
     locationAddress: data.locationAddress ?? DEFAULT_SETTINGS.locationAddress,
     footerCopyright: data.footerCopyright ?? DEFAULT_SETTINGS.footerCopyright,
     footerCredit: data.footerCredit ?? DEFAULT_SETTINGS.footerCredit,
+    attentionNote: data.attentionNote ?? DEFAULT_SETTINGS.attentionNote,
   };
 }
 
@@ -564,6 +567,9 @@ export default function AdminDashboard() {
                     )}
                     Pendaftaran {settings.registrationOpen ? "DIBUKA" : "DITUTUP"}
                   </button>
+                  <div className="mt-4">
+                    <Textarea label="Catatan Perhatian di Form Pendaftaran" value={settings.attentionNote} onChange={(v) => setSettings({ ...settings, attentionNote: v })} />
+                  </div>
                 </div>
 
                 <div className="border-t border-gray-100 pt-4">

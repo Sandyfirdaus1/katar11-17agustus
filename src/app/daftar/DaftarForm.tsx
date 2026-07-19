@@ -15,9 +15,10 @@ interface LombaGroupItem {
 interface DaftarFormProps {
   lombaGroups: LombaGroupItem[];
   registrationOpen: boolean;
+  attentionNote: string;
 }
 
-export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarFormProps) {
+export default function DaftarForm({ lombaGroups, registrationOpen, attentionNote }: DaftarFormProps) {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [phone, setPhone] = useState("");
@@ -213,12 +214,9 @@ export default function DaftarForm({ lombaGroups, registrationOpen }: DaftarForm
         <div className="text-sm text-amber-800">
           <p className="font-bold">Perhatian:</p>
           <ul className="mt-1 list-disc list-inside space-y-1">
-            <li>Nama yang sama tidak diperbolehkan mendaftar lebih dari satu kali</li>
-            <li>Lomba tim (Estafet Air) total 4 orang (Anda + 3 anggota tim)</li>
-            <li>Lomba tim kecil (Balap Bakiak) total 3 orang (Anda + 2 anggota tim)</li>
-            <li>Lomba tim pasangan (Joget Jeruk) total 2 orang (Anda + 1 anggota tim)</li>
-            <li>Untuk lomba tim, gunakan kata "dan" antar nama anggota tim (contoh: Budi dan Andi dan Citra)</li>
-            <li>Pastikan data yang Anda isi sudah benar sebelum mengirim formulir</li>
+            {attentionNote.split('\n').map((line, index) => (
+              <li key={index}>{line}</li>
+            ))}
           </ul>
         </div>
       </div>

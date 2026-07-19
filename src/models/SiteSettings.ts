@@ -20,6 +20,7 @@ export interface ISiteSettings {
   locationAddress: string;
   footerCopyright: string;
   footerCredit: string;
+  attentionNote: string;
 }
 
 const SiteSettingsSchema = new Schema<ISiteSettings>(
@@ -50,6 +51,10 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
     locationAddress: { type: String, default: "Jl Walang Sari Raya" },
     footerCopyright: { type: String, default: "© 2026 Crew RT 011. Dirgahayu Republik Indonesia." },
     footerCredit: { type: String, default: "Dibuat Oleh Shandy" },
+    attentionNote: {
+      type: String,
+      default: "Nama yang sama tidak diperbolehkan mendaftar lebih dari satu kali\nLomba tim (Estafet Air) total 4 orang (Anda + 3 anggota tim)\nLomba tim kecil (Balap Bakiak) total 3 orang (Anda + 2 anggota tim)\nLomba tim pasangan (Joget Jeruk) total 2 orang (Anda + 1 anggota tim)\nUntuk lomba tim, gunakan kata \"dan\" antar nama anggota tim (contoh: Budi dan Andi dan Citra)\nPastikan data yang Anda isi sudah benar sebelum mengirim formulir",
+    },
   },
   { timestamps: true }
 );
