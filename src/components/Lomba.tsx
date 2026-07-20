@@ -14,7 +14,7 @@ export default function Lomba({ groups }: LombaProps) {
           LOMBA 17 AGUSTUS 2026
         </h2>
         <p className="mb-8 text-center text-sm text-gray-600">
-          Kegiatan lomba untuk semua usia, dari balita hingga dewasa
+          Kegiatan lomba untuk semua usia, dari anak-anak hingga dewasa
         </p>
 
         <div className="flex flex-wrap justify-center gap-6">

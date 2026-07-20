@@ -43,7 +43,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
     eventDate: { type: String, default: "17 AGUSTUS 2026" },
     eventTime: { type: String, default: "08.00 - SELESAI" },
     eventLocation: { type: String, default: "LINGKUNGAN RT 011" },
-    eventAudience: { type: String, default: "BALITA HINGGA DEWASA" },
+    eventAudience: { type: String, default: "ANAK-ANAK HINGGA DEWASA" },
     whatsapp: { type: String, default: "0895-1787-2311" },
     whatsappLabel: { type: String, default: "Pengelola Web Lomba 17 Agustus" },
     whatsappLink: { type: String, default: "6289517872311" },

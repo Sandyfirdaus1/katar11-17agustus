@@ -101,7 +101,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   eventDate: "17 AGUSTUS 2026",
   eventTime: "08.00 - SELESAI",
   eventLocation: "LINGKUNGAN RT 011",
-  eventAudience: "BALITA HINGGA DEWASA",
+  eventAudience: "ANAK-ANAK HINGGA DEWASA",
   whatsapp: "0895-1787-2311",
   whatsappLabel: "Pengelola Web Lomba 17 Agustus",
   whatsappLink: "6289517872311",
