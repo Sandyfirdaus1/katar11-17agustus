@@ -1,6 +1,6 @@
-# Lomba 17 Agustus RT 011 / Katar 11
+# Lomba 17 Agustus RT 011 / Crew 011
 
-Website informasi dan pendaftaran lomba 17 Agustus 2026 untuk Lingkungan RT 011 / Katar 11.
+Website informasi dan pendaftaran lomba 17 Agustus 2026 untuk Lingkungan RT 011 / Crew 011.
 
 **Stack:** Next.js 16, Tailwind CSS v4, MongoDB Atlas
 

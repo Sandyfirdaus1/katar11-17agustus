@@ -14,9 +14,9 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Katar 11 - Lomba 17 Agustus 2026",
+  title: "Crew 011 - Lomba 17 Agustus 2026",
   description:
-    "Peringatan Hari Kemerdekaan Republik Indonesia ke-81 di Lingkungan Katar 11. Kita Bersama, Kita Bisa!",
+    "Peringatan Hari Kemerdekaan Republik Indonesia ke-81 di Lingkungan Crew 011. Kita Bersama, Kita Bisa!",
 };
 
 export default function RootLayout({

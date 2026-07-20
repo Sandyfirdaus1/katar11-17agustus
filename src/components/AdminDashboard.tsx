@@ -107,7 +107,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   whatsappLink: "6289517872311",
   locationName: "Lingkungan RT 011",
   locationAddress: "Jl Walang Sari Raya",
-  footerCopyright: "© 2026 Katar 11. Dirgahayu Republik Indonesia.",
+  footerCopyright: "© 2026 Crew 011. Dirgahayu Republik Indonesia.",
   footerCredit: "Dibuat Oleh Shandy",
   attentionNote: "Nama yang sama tidak diperbolehkan mendaftar lebih dari satu kali\nLomba tim (Estafet Air) total 4 orang (Anda + 3 anggota tim)\nLomba tim kecil (Balap Bakiak) total 3 orang (Anda + 2 anggota tim)\nLomba tim pasangan (Joget Jeruk) total 2 orang (Anda + 1 anggota tim)\nUntuk lomba tim, gunakan kata \"dan\" antar nama anggota tim (contoh: Budi dan Andi dan Citra)\nPastikan data yang Anda isi sudah benar sebelum mengirim formulir",
 };

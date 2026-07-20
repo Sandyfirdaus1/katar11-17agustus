@@ -7,7 +7,7 @@ export default function Hero() {
         <source media="(min-width: 768px)" srcSet="/beranda-ipad.png" />
         <img
           src="/beranda-mobile.png"
-          alt="Dirgahayu Republik Indonesia - Katar 11 17 Agustus 2026"
+          alt="Dirgahayu Republik Indonesia - Crew 011 17 Agustus 2026"
           className="h-full w-full object-contain object-top md:object-center"
           fetchPriority="high"
         />
